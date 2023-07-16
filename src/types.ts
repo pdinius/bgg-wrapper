@@ -185,7 +185,7 @@ export type RawThing = {
           title: string;
           totalvotes: string;
         };
-        results: Array<{
+        results?: Array<{
           $?: {
             [key: string]: string;
           };
@@ -331,7 +331,7 @@ export type BggThing = {
     name: string;
     label: string;
     total_votes: number;
-    results: Array<{
+    results?: Array<{
       option: string;
       num_votes: number;
     }>;
@@ -356,7 +356,17 @@ export type BggThing = {
   };
 };
 
-export interface CommandParams {
+export type Command = 'collection' | 'thing';
+
+type CommandParamsDef = {
+  [key in Command]: {
+    raw_response: any;
+    transformed_response: any;
+    params: any;
+  }
+}
+
+export interface CommandParams extends CommandParamsDef {
   collection: {
     raw_response: RawCollection;
     params: {

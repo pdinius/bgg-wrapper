@@ -1,4 +1,6 @@
-const t = (n: number, s: "milliseconds" | "seconds" | "minutes" | "hours") => {
+type timeString = "milliseconds" | "seconds" | "minutes" | "hours";
+
+const t = (n: number, s: timeString) => {
   switch (s) {
     case "milliseconds":
       return n;
@@ -11,8 +13,23 @@ const t = (n: number, s: "milliseconds" | "seconds" | "minutes" | "hours") => {
   }
 };
 
-const timeout = (...args: Parameters<typeof t>) => {
-  return new Promise((res, _) => {
-    setTimeout(res, t(...args));
-  });
+function timeout(n: number, s: timeString): Promise<undefined>;
+function timeout(n: number): Promise<undefined>;
+
+function timeout(n: number, s?: timeString): Promise<undefined> {
+  if (s) {
+    return new Promise((res, _) => {
+      setTimeout(res, t(n, s))
+    });
+  } else {
+    return new Promise((res, _) => {
+      setTimeout(res, n)
+    });
+  }
 };
+
+// const timeout = (n: number) => {
+//   return new Promise((res, _) => {
+//     setTimeout(res, n);
+//   });
+// };

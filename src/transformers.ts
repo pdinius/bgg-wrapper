@@ -50,7 +50,7 @@ export const transformRawCollectionToCollection = (
         max_players: Number(v.stats[0].$.maxplayers),
         min_playtime: Number(v.stats[0].$.minplaytime),
         max_playtime: Number(v.stats[0].$.maxplaytime),
-      }
+      };
     }
 
     return res;
@@ -58,12 +58,13 @@ export const transformRawCollectionToCollection = (
   return {
     total_items: Number(c.items.$.totalitems),
     retrieved_date: new Date(c.items.$.pubdate),
-    items
+    items,
   };
 };
 
 export const transformRawThingToBggThing = (v: RawThing): Array<BggThing> => {
   const items = v.items.item;
+
   return items.map((item) => {
     const res: BggThing = {
       name: item.name.find((n) => n.$.type === "primary")!.$.value,
@@ -90,31 +91,32 @@ export const transformRawThingToBggThing = (v: RawThing): Array<BggThing> => {
         name: $.name,
         label: $.title,
         total_votes: Number($.totalvotes),
-        results:
-          results.length === 1
-            ? results[0].result.map(({ $: { level, value, numvotes } }) => {
-                let option = value;
-                if (level) {
-                  option = `${level} - ${option}`;
+        results: !results
+          ? undefined
+          : results.length === 1
+          ? results[0].result.map(({ $: { level, value, numvotes } }) => {
+              let option = value;
+              if (level) {
+                option = `${level} - ${option}`;
+              }
+              return {
+                option,
+                num_votes: Number(numvotes),
+              };
+            })
+          : results.flatMap(({ $, result }) => {
+              const res = result.map(({ $ }) => ({
+                option: $.value,
+                num_votes: Number($.numvotes),
+              }));
+              if ($) {
+                const [key, value] = Object.entries($)[0];
+                for (let r of res) {
+                  r.option = `${key}: ${value} - ${r.option}`;
                 }
-                return {
-                  option,
-                  num_votes: Number(numvotes),
-                };
-              })
-            : results.flatMap(({ $, result }) => {
-                const res = result.map(({ $ }) => ({
-                  option: $.value,
-                  num_votes: Number($.numvotes),
-                }));
-                if ($) {
-                  const [key, value] = Object.entries($)[0];
-                  for (let r of res) {
-                    r.option = `${key}: ${value} - ${r.option}`;
-                  }
-                }
-                return res;
-              }),
+              }
+              return res;
+            }),
       })),
     };
 

@@ -1,6 +1,6 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import xml2js from "xml2js";
-import { CommandParams } from "./types";
+import { BggThing, Command, CommandParams } from "./types";
 import {
   transformRawCollectionToCollection,
   transformRawThingToBggThing,
@@ -29,15 +29,22 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
       return execute(url, --attempts);
     }
 
-    if (response.status === 429) {
-      await timeout(15, "seconds");
-      return execute(url, --attempts);
-    } else if (response.status >= 400) {
-      throw Error(response.statusText);
-    }
-
     return await parser.parseStringPromise(response.data);
   } catch (e: any) {
+    const response: AxiosResponse = e.response;
+
+    if (response.status === 429) {
+      const time = Number(response.headers['Retry-After']);
+      if (time) {
+        await timeout(time);
+      } else {
+        await timeout(15, "seconds");
+      }
+      return execute(url, --attempts);
+    } else if (response.status >= 400) {
+      throw Error(response.data);
+    }
+
     throw Error(e.message);
   }
 };
@@ -56,10 +63,10 @@ const getWithTimeout = <T>(
   return execute<T>(url);
 };
 
-export const bgg = async <Command extends keyof CommandParams>(
-  c: Command,
-  params: CommandParams[Command]["params"]
-): Promise<CommandParams[Command]["transformed_response"]> => {
+export const bgg = async <C extends Command>(
+  c: C,
+  params: CommandParams[C]["params"]
+): Promise<CommandParams[C]["transformed_response"]> => {
   let resParams: { [key: string]: string | number } = {};
 
   for (let p in params) {
@@ -76,6 +83,6 @@ export const bgg = async <Command extends keyof CommandParams>(
     }
   }
 
-  const data = await getWithTimeout<CommandParams[Command]["raw_response"]>(c, resParams);
+  const data = await getWithTimeout<CommandParams[C]["raw_response"]>(c, resParams);
   return transformerDict[c](data);
 };
