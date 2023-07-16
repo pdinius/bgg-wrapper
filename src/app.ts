@@ -79,8 +79,3 @@ export const bgg = async <Command extends keyof CommandParams>(
   const data = await getWithTimeout<CommandParams[Command]["raw_response"]>(c, resParams);
   return transformerDict[c](data);
 };
-
-
-bgg('collection', { username: 'phildinius' }).then(v => {
-  console.log(v);
-})
