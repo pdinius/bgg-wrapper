@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
-import { parseString } from 'xml2js';
+import { parseString } from "xml2js";
+import { BGGItem, RawCollection, SubType } from "./types";
 
-type SubType = "boardgame" | "boardgameexpansion" | "boardgameaccessory";
 interface CommandParams {
   collection: {
     username: string;
@@ -48,6 +48,7 @@ const getWithTimeout = async (
   if (paramsString.length) url += `?${paramsString}`;
 
   const execute = async (url: string) => {
+    console.log(url);
     try {
       const response: AxiosResponse = await axios.get(url);
       console.log(response.status);
@@ -67,14 +68,51 @@ const getWithTimeout = async (
 
   const data = await execute(url);
   parseString(data, (err, res) => {
-    // const items = res.items.item.map(v => {
-
-    // })
-    console.log(JSON.stringify(res.items.item[0], null, 2));
-  })
+    const items = res.items.item.map(
+      (v: RawCollection): BGGItem => ({
+        id: Number(v.$.objectid),
+        subtype: v.$.subtype as SubType,
+        name: v.name[0]._,
+        year_published: Number(v.yearpublished),
+        image_url: v.image[0],
+        thumbnail_url: v.thumbnail[0],
+        stats: {
+          min_players: Number(v.stats[0].$.minplayers),
+          max_players: Number(v.stats[0].$.maxplayers),
+          min_playtime: Number(v.stats[0].$.minplaytime),
+          max_playtime: Number(v.stats[0].$.maxplaytime),
+        },
+        rating: Number(v.stats[0].rating[0].$.value),
+        num_users_rated: Number(v.stats[0].rating[0].usersrated[0].$.value),
+        avg_user_rating: Number(v.stats[0].rating[0].average[0].$.value),
+        geek_rating: Number(v.stats[0].rating[0].bayesaverage[0].$.value),
+        ranks: v.stats[0].rating[0].ranks[0].rank.map(r => ({
+          type: r.$.type,
+          id: Number(r.$.id),
+          name: r.$.name,
+          label: r.$.friendlyname,
+          rank: Number(r.$.value),
+          avg_rating: Number(r.$.bayesaverage),
+        })),
+        status: {
+          own: v.status[0].$.own === '1',
+          prev_owned: v.status[0].$.prevowned === '1',
+          for_trade: v.status[0].$.fortrade === '1',
+          want: v.status[0].$.want === '1',
+          want_to_play: v.status[0].$.wanttoplay === '1',
+          want_to_buy: v.status[0].$.wanttobuy === '1',
+          wishlist: v.status[0].$.wishlist === '1',
+          preordered: v.status[0].$.preordered === '1',
+          last_modified: new Date(v.status[0].$.lastmodified),
+        },
+        num_plays: Number(v.numplays),
+      })
+    );
+    console.log(items[0]);
+  });
 };
 
-const bgg = <Command extends keyof CommandParams>(
+export const bgg = <Command extends keyof CommandParams>(
   c: Command,
   params: CommandParams[Command]
 ) => {
