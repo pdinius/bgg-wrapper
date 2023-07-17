@@ -71,12 +71,12 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
       name: item.name.find((n) => n.type === "primary")!.value,
       id: Number(item.$.id),
       type: item.$.type,
-      image_url: item.image[0],
-      thumbnail_url: item.thumbnail[0],
+      image_url: item.image,
+      thumbnail_url: item.thumbnail,
       alternate_names: item.name
         .filter((n) => n.type === "alternate")
         .map((n) => n.value),
-      description: item.description[0],
+      description: item.description,
       year_published: Number(item.yearpublished.value),
       min_players: Number(item.minplayers.value),
       max_players: Number(item.maxplayers.value),
