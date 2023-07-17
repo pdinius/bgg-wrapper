@@ -330,9 +330,11 @@ export type Command = "collection" | "thing";
 
 type CommandParamsDef = {
   [key in Command]: {
-    raw_response: any;
-    transformed_response: any;
-    params: any;
+    raw_response: RawCollection | RawThing;
+    transformed_response: Collection | Array<Thing>;
+    params: {
+      [key: string]: string | number | Array<number> | boolean | Date
+    };
   };
 };
 
@@ -344,7 +346,7 @@ export interface CommandParams extends CommandParamsDef {
       // version?: number;
       subtype?: SubType;
       excludesubtype?: SubType;
-      id?: string | Array<string>;
+      id?: number | Array<number>;
       // brief?: boolean;
       stats?: boolean;
       own?: boolean;

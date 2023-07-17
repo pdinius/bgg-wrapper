@@ -79,7 +79,7 @@ export const bgg = async <C extends Command>(
         String(d.getMonth()).padStart(2, "0") +
         String(d.getDate()).padStart(2, "0");
     } else {
-      resParams[p] = params[p] as any;
+      resParams[p] = params[p] as string | number;
     }
   }
 
