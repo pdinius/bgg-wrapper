@@ -13,10 +13,9 @@ const t = (n: number, s: timeString) => {
   }
 };
 
-function timeout(n: number, s: timeString): Promise<undefined>;
-function timeout(n: number): Promise<undefined>;
-
-function timeout(n: number, s?: timeString): Promise<undefined> {
+export function timeout(n: number, s: timeString): Promise<undefined>;
+export function timeout(n: number): Promise<undefined>;
+export function timeout(n: number, s?: timeString) {
   if (s) {
     return new Promise((res, _) => {
       setTimeout(res, t(n, s))
@@ -27,9 +26,3 @@ function timeout(n: number, s?: timeString): Promise<undefined> {
     });
   }
 };
-
-// const timeout = (n: number) => {
-//   return new Promise((res, _) => {
-//     setTimeout(res, n);
-//   });
-// };

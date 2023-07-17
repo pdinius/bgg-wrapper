@@ -2,9 +2,10 @@ import axios, { AxiosResponse } from "axios";
 import { Command, CommandParams } from "./types";
 import {
   transformRawCollectionToCollection,
-  transformRawThingToBggThing,
+  transformRawThingToThing,
 } from "./transformers";
-import { parse } from "./xml-parse";
+import { parse } from "browser-xml";
+import { timeout } from "./utils";
 
 const baseUrl = "https://boardgamegeek.com/xmlapi2/";
 const transformerDict: {
@@ -13,7 +14,7 @@ const transformerDict: {
   ) => CommandParams[key]["transformed_response"];
 } = {
   collection: transformRawCollectionToCollection,
-  thing: transformRawThingToBggThing,
+  thing: transformRawThingToThing,
 };
 
 const execute = async <T>(url: string, attempts = 5): Promise<T> => {
@@ -28,7 +29,7 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
       return execute(url, --attempts);
     }
 
-    return  parse(response.data);
+    return parse(response.data);
   } catch (e: any) {
     const response: AxiosResponse = e.response;
 

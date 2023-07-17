@@ -3,3 +3,4 @@ node_modules
 yarn.lock
 *.gitignore
 *.gitattributes
+examples

@@ -1,66 +1,22 @@
-import { transformRawThingToBggThing } from "./transformers";
-
 export type SubType = "boardgame" | "boardgameexpansion" | "boardgameaccessory";
 
 export type RawCollectionItem = {
+  $: {
+    objecttype: string;
+    objectid: string;
+    subtype: SubType;
+    collid: string;
+  };
   name: {
-    _v: string;
     $: {
       sortindex: string;
     };
-  };
-  yearpublished: {
     _v: string;
   };
-  image: {
-    _v: string;
-  };
-  thumbnail: {
-    _v: string;
-  };
+  yearpublished: string;
+  image: string;
+  thumbnail: string;
   stats: {
-    rating: {
-      usersrated: {
-        $: {
-          value: string;
-        };
-      };
-      average: {
-        $: {
-          value: string;
-        };
-      };
-      bayesaverage: {
-        $: {
-          value: string;
-        };
-      };
-      stddev: {
-        $: {
-          value: string;
-        };
-      };
-      median: {
-        $: {
-          value: string;
-        };
-      };
-      ranks: {
-        rank: Array<{
-          $: {
-            type: string;
-            id: string;
-            name: string;
-            friendlyname: string;
-            value: string;
-            bayesaverage: string;
-          };
-        }>;
-      };
-      $: {
-        value: string;
-      };
-    };
     $: {
       minplayers: string;
       maxplayers: string;
@@ -69,39 +25,59 @@ export type RawCollectionItem = {
       playingtime: string;
       numowned: string;
     };
-  };
-  status: {
-    $: {
-      own: string;
-      prevowned: string;
-      fortrade: string;
-      want: string;
-      wanttoplay: string;
-      wanttobuy: string;
-      wishlist: string;
-      preordered: string;
-      lastmodified: string;
+    rating: {
+      $: {
+        value: string;
+      };
+      usersrated: {
+        value: string;
+      };
+      average: {
+        value: string;
+      };
+      bayesaverage: {
+        value: string;
+      };
+      stddev: {
+        value: string;
+      };
+      median: {
+        value: string;
+      };
+      ranks: {
+        rank: Array<{
+          type: string;
+          id: string;
+          name: string;
+          friendlyname: string;
+          value: string;
+          bayesaverage: string;
+        }>;
+      };
     };
   };
-  numplays: {
-    _v: string;
+  status: {
+    own: string;
+    prevowned: string;
+    fortrade: string;
+    want: string;
+    wanttoplay: string;
+    wanttobuy: string;
+    wishlist: string;
+    preordered: string;
+    lastmodified: string;
   };
-  $: {
-    objecttype: string;
-    objectid: string;
-    subtype: SubType;
-    collid: string;
-  };
+  numplays: string;
 };
 
 export type RawCollection = {
   items: {
-    item: Array<RawCollectionItem>;
     $: {
       totalitems: string;
       termsofuse: string;
       pubdate: string;
     };
+    item: Array<RawCollectionItem>;
   };
 };
 
@@ -148,173 +124,169 @@ export type Collection = {
   total_items: number;
   retrieved_date: Date;
   items: Array<CollectionItem>;
-}
+};
+
+export type RawItem = {
+  $: {
+    type: SubType;
+    id: string;
+  };
+  thumbnail: string;
+  image: string;
+  name: Array<{
+    type: "primary" | "alternate";
+    sortindex: string;
+    value: string;
+  }>;
+  description: string;
+  yearpublished: {
+    value: string;
+  };
+  minplayers: {
+    value: string;
+  };
+  maxplayers: {
+    value: string;
+  };
+  poll: [
+    {
+      $: {
+        name: "suggested_numplayers";
+        title: string;
+        totalvotes: string;
+      };
+      results: Array<{
+        $: {
+          numplayers: string;
+        };
+        result: Array<{
+          value: string;
+          numvotes: string;
+        }>;
+      }>;
+    },
+    {
+      $: {
+        name: "suggested_playerage";
+        title: string;
+        totalvotes: string;
+      };
+      results: {
+        result: Array<{
+          value: string;
+          numvotes: string;
+        }>;
+      };
+    },
+    {
+      $: {
+        name: "language_dependence";
+        title: string;
+        totalvotes: string;
+      };
+      results: {
+        result: Array<{
+          level: string;
+          value: string;
+          numvotes: string;
+        }>;
+      };
+    }
+  ];
+  playingtime: {
+    value: string;
+  };
+  minplaytime: {
+    value: string;
+  };
+  maxplaytime: {
+    value: string;
+  };
+  minage: {
+    value: string;
+  };
+  link: Array<{
+    type: string;
+    id: string;
+    value: string;
+  }>;
+  statistics?: {
+    $: {
+      page: string;
+    };
+    ratings: {
+      usersrated: {
+        value: string;
+      };
+      average: {
+        value: string;
+      };
+      bayesaverage: {
+        value: string;
+      };
+      ranks: {
+        rank: Array<{
+          type: string;
+          id: string;
+          name: string;
+          friendlyname: string;
+          value: string;
+          bayesaverage: string;
+        }>;
+      };
+      stddev: {
+        value: string;
+      };
+      median: {
+        value: string;
+      };
+      owned: {
+        value: string;
+      };
+      trading: {
+        value: string;
+      };
+      wanting: {
+        value: string;
+      };
+      wishing: {
+        value: string;
+      };
+      numcomments: {
+        value: string;
+      };
+      numweights: {
+        value: string;
+      };
+      averageweight: {
+        value: string;
+      };
+    };
+  };
+};
 
 export type RawThing = {
   items: {
     $: {
       termsofuse: string;
     };
-    item: Array<{
-      $: {
-        type: SubType;
-        id: string;
-      };
-      thumbnail: Array<string>;
-      image: Array<string>;
-      name: Array<{
-        $: {
-          type: "primary" | "alternate";
-          sortindex: string;
-          value: string;
-        };
-      }>;
-      description: Array<string>;
-      yearpublished: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      minplayers: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      maxplayers: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      poll: Array<{
-        $: {
-          name: string;
-          title: string;
-          totalvotes: string;
-        };
-        results?: Array<{
-          $?: {
-            [key: string]: string;
-          };
-          result: Array<{
-            $: {
-              level?: string;
-              value: string;
-              numvotes: string;
-            };
-          }>;
-        }>;
-      }>;
-      playingtime: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      minplaytime: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      maxplaytime: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      minage: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      link: Array<{
-        $: {
-          type: string;
-          id: string;
-          value: string;
-        };
-      }>;
-      statistics?: Array<{
-        $: {
-          page: string;
-        };
-        ratings: Array<{
-          usersrated: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          average: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          bayesaverage: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          ranks: Array<{
-            rank: Array<{
-              $: {
-                type: string;
-                id: string;
-                name: string;
-                friendlyname: string;
-                value: string;
-                bayesaverage: string;
-              };
-            }>;
-          }>;
-          stddev: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          median: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          owned: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          trading: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          wanting: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          wishing: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          numcomments: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          numweights: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-          averageweight: Array<{
-            $: {
-              value: string;
-            };
-          }>;
-        }>;
-      }>;
-    }>;
+    item: RawItem | Array<RawItem>;
   };
 };
 
-export type BggThing = {
+export type PollResult = {
+  option: string;
+  num_votes: number;
+};
+
+export type Poll = {
+  name: string;
+  label: string;
+  total_votes: number;
+  results?: Array<PollResult>;
+};
+
+export type Thing = {
   name: string;
   id: number;
   type: SubType;
@@ -333,15 +305,7 @@ export type BggThing = {
     id: number;
     type: string;
   }>;
-  polls: Array<{
-    name: string;
-    label: string;
-    total_votes: number;
-    results?: Array<{
-      option: string;
-      num_votes: number;
-    }>;
-  }>;
+  polls: Array<Poll>;
   stats?: {
     num_ratings: number;
     rating: number;
@@ -362,15 +326,15 @@ export type BggThing = {
   };
 };
 
-export type Command = 'collection' | 'thing';
+export type Command = "collection" | "thing";
 
 type CommandParamsDef = {
   [key in Command]: {
     raw_response: any;
     transformed_response: any;
     params: any;
-  }
-}
+  };
+};
 
 export interface CommandParams extends CommandParamsDef {
   collection: {
@@ -422,6 +386,6 @@ export interface CommandParams extends CommandParamsDef {
       // page?: number;
       // pagesize?: number; // between 10 and 100
     };
-    transformed_response: Array<BggThing>;
+    transformed_response: Array<Thing>;
   };
 }
