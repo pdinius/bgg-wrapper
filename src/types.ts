@@ -3,62 +3,49 @@ import { transformRawThingToBggThing } from "./transformers";
 export type SubType = "boardgame" | "boardgameexpansion" | "boardgameaccessory";
 
 export type RawCollectionItem = {
-  $: {
-    objecttype: string;
-    objectid: string;
-    subtype: string;
-    collid: string;
-  };
-  name: [
-    {
-      _: string;
-      $: {
-        sortindex: string;
-      };
-    }
-  ];
-  yearpublished: Array<string>;
-  image: Array<string>;
-  thumbnail: Array<string>;
-  stats: Array<{
+  name: {
+    _v: string;
     $: {
-      minplayers: string;
-      maxplayers: string;
-      minplaytime: string;
-      maxplaytime: string;
-      playingtime: string;
-      numowned: string;
+      sortindex: string;
     };
-    rating: Array<{
-      $: {
-        value: string;
+  };
+  yearpublished: {
+    _v: string;
+  };
+  image: {
+    _v: string;
+  };
+  thumbnail: {
+    _v: string;
+  };
+  stats: {
+    rating: {
+      usersrated: {
+        $: {
+          value: string;
+        };
       };
-      usersrated: Array<{
+      average: {
         $: {
           value: string;
         };
-      }>;
-      average: Array<{
+      };
+      bayesaverage: {
         $: {
           value: string;
         };
-      }>;
-      bayesaverage: Array<{
+      };
+      stddev: {
         $: {
           value: string;
         };
-      }>;
-      stddev: Array<{
+      };
+      median: {
         $: {
           value: string;
         };
-      }>;
-      median: Array<{
-        $: {
-          value: string;
-        };
-      }>;
-      ranks: Array<{
+      };
+      ranks: {
         rank: Array<{
           $: {
             type: string;
@@ -69,10 +56,21 @@ export type RawCollectionItem = {
             bayesaverage: string;
           };
         }>;
-      }>;
-    }>;
-  }>;
-  status: Array<{
+      };
+      $: {
+        value: string;
+      };
+    };
+    $: {
+      minplayers: string;
+      maxplayers: string;
+      minplaytime: string;
+      maxplaytime: string;
+      playingtime: string;
+      numowned: string;
+    };
+  };
+  status: {
     $: {
       own: string;
       prevowned: string;
@@ -84,18 +82,26 @@ export type RawCollectionItem = {
       preordered: string;
       lastmodified: string;
     };
-  }>;
-  numplays: Array<string>;
+  };
+  numplays: {
+    _v: string;
+  };
+  $: {
+    objecttype: string;
+    objectid: string;
+    subtype: SubType;
+    collid: string;
+  };
 };
 
 export type RawCollection = {
   items: {
+    item: Array<RawCollectionItem>;
     $: {
       totalitems: string;
       termsofuse: string;
       pubdate: string;
     };
-    item: Array<RawCollectionItem>;
   };
 };
 

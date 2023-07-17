@@ -13,31 +13,31 @@ export const transformRawCollectionToCollection = (
   const items = c.items.item.map((v) => {
     const res: CollectionItem = {
       id: Number(v.$.objectid),
-      subtype: v.$.subtype as SubType,
-      name: v.name[0]._,
-      year_published: Number(v.yearpublished),
-      image_url: v.image[0],
-      thumbnail_url: v.thumbnail[0],
+      subtype: v.$.subtype,
+      name: v.name._v,
+      year_published: Number(v.yearpublished._v),
+      image_url: v.image._v,
+      thumbnail_url: v.thumbnail._v,
       status: {
-        own: v.status[0].$.own === "1",
-        prev_owned: v.status[0].$.prevowned === "1",
-        for_trade: v.status[0].$.fortrade === "1",
-        want: v.status[0].$.want === "1",
-        want_to_play: v.status[0].$.wanttoplay === "1",
-        want_to_buy: v.status[0].$.wanttobuy === "1",
-        wishlist: v.status[0].$.wishlist === "1",
-        preordered: v.status[0].$.preordered === "1",
-        last_modified: new Date(v.status[0].$.lastmodified),
+        own: v.status.$.own === "1",
+        prev_owned: v.status.$.prevowned === "1",
+        for_trade: v.status.$.fortrade === "1",
+        want: v.status.$.want === "1",
+        want_to_play: v.status.$.wanttoplay === "1",
+        want_to_buy: v.status.$.wanttobuy === "1",
+        wishlist: v.status.$.wishlist === "1",
+        preordered: v.status.$.preordered === "1",
+        last_modified: new Date(v.status.$.lastmodified),
       },
-      num_plays: Number(v.numplays),
+      num_plays: Number(v.numplays._v),
     };
 
     if (v.stats) {
-      res.rating = Number(v.stats[0].rating[0].$.value);
-      res.num_users_rated = Number(v.stats[0].rating[0].usersrated[0].$.value);
-      res.avg_user_rating = Number(v.stats[0].rating[0].average[0].$.value);
-      res.geek_rating = Number(v.stats[0].rating[0].bayesaverage[0].$.value);
-      res.ranks = v.stats[0].rating[0].ranks[0].rank.map((r) => ({
+      res.rating = Number(v.stats.rating.$.value);
+      res.num_users_rated = Number(v.stats.rating.usersrated.$.value);
+      res.avg_user_rating = Number(v.stats.rating.average.$.value);
+      res.geek_rating = Number(v.stats.rating.bayesaverage.$.value);
+      res.ranks = v.stats.rating.ranks.rank.map((r) => ({
         type: r.$.type,
         id: Number(r.$.id),
         name: r.$.name,
@@ -46,10 +46,10 @@ export const transformRawCollectionToCollection = (
         avg_rating: Number(r.$.bayesaverage),
       }));
       res.stats = {
-        min_players: Number(v.stats[0].$.minplayers),
-        max_players: Number(v.stats[0].$.maxplayers),
-        min_playtime: Number(v.stats[0].$.minplaytime),
-        max_playtime: Number(v.stats[0].$.maxplaytime),
+        min_players: Number(v.stats.$.minplayers),
+        max_players: Number(v.stats.$.maxplayers),
+        min_playtime: Number(v.stats.$.minplaytime),
+        max_playtime: Number(v.stats.$.maxplaytime),
       };
     }
 
@@ -91,32 +91,32 @@ export const transformRawThingToBggThing = (v: RawThing): Array<BggThing> => {
         name: $.name,
         label: $.title,
         total_votes: Number($.totalvotes),
-        results: !results
-          ? undefined
-          : results.length === 1
-          ? results[0].result.map(({ $: { level, value, numvotes } }) => {
-              let option = value;
-              if (level) {
-                option = `${level} - ${option}`;
-              }
-              return {
-                option,
-                num_votes: Number(numvotes),
-              };
-            })
-          : results.flatMap(({ $, result }) => {
-              const res = result.map(({ $ }) => ({
-                option: $.value,
-                num_votes: Number($.numvotes),
-              }));
-              if ($) {
-                const [key, value] = Object.entries($)[0];
-                for (let r of res) {
-                  r.option = `${key}: ${value} - ${r.option}`;
-                }
-              }
-              return res;
-            }),
+        // results: !results
+        //   ? undefined
+        //   : results.length === 1
+        //   ? results[0].result.map(({ $: { level, value, numvotes } }) => {
+        //       let option = value;
+        //       if (level) {
+        //         option = `${level} - ${option}`;
+        //       }
+        //       return {
+        //         option,
+        //         num_votes: Number(numvotes),
+        //       };
+        //     })
+        //   : results.flatMap(({ $, result }) => {
+        //       const res = result.map(({ $ }) => ({
+        //         option: $.value,
+        //         num_votes: Number($.numvotes),
+        //       }));
+        //       if ($) {
+        //         const [key, value] = Object.entries($)[0];
+        //         for (let r of res) {
+        //           r.option = `${key}: ${value} - ${r.option}`;
+        //         }
+        //       }
+        //       return res;
+        //     }),
       })),
     };
 

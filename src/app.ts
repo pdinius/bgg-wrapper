@@ -1,12 +1,11 @@
 import axios, { AxiosResponse } from "axios";
-import xml2js from "xml2js";
-import { BggThing, Command, CommandParams } from "./types";
+import { Command, CommandParams } from "./types";
 import {
   transformRawCollectionToCollection,
   transformRawThingToBggThing,
 } from "./transformers";
+import { parse } from "./xml-parse";
 
-const parser = new xml2js.Parser();
 const baseUrl = "https://boardgamegeek.com/xmlapi2/";
 const transformerDict: {
   [key in keyof CommandParams]: (
@@ -29,7 +28,7 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
       return execute(url, --attempts);
     }
 
-    return await parser.parseStringPromise(response.data);
+    return  parse(response.data);
   } catch (e: any) {
     const response: AxiosResponse = e.response;
 
