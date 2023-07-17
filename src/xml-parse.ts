@@ -61,6 +61,7 @@ const parse = (xml: string) => {
           value = parseSingleEntity(lines[0]);
           lines = lines.slice(1);
         } else {
+          const props = parseSingleEntity(lines[0]);
           const closingTagIdx = lines.findIndex(l => RegExp(`^</\\s*${tag}`).test(l));
           value = format(lines.slice(1, closingTagIdx));
           lines = lines.slice(closingTagIdx + 1);
