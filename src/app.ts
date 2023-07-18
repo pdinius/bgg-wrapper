@@ -1,4 +1,3 @@
-import axios, { AxiosResponse } from "axios";
 import { Command, CommandParams } from "./types";
 import {
   transformRawCollectionToCollection,
@@ -22,19 +21,15 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
     throw Error("Ran out of attempts.");
   }
   try {
-    const response = await axios.get(url);
+    const response = await fetch(url);
 
     if (response.status === 202) {
       await timeout(5, "seconds");
-      return execute(url, --attempts);
+      return execute<T>(url, --attempts);
     }
-
-    return parse(response.data);
-  } catch (e: any) {
-    const response: AxiosResponse = e.response;
-
+    
     if (response.status === 429) {
-      const time = Number(response.headers['Retry-After']);
+      const time = Number(response.headers.get('Retry-After'));
       if (time) {
         await timeout(time);
       } else {
@@ -42,10 +37,17 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
       }
       return execute(url, --attempts);
     } else if (response.status >= 400) {
-      throw Error(response.data);
+      throw Error(await response.text());
     }
 
-    throw Error(e.message);
+    const data = await response.text();
+    return parse<T>(data);
+  } catch (e) {
+    if (e instanceof Error) {
+      throw Error(e.message);
+    } else {
+      throw Error('Failed to fetch from bgg.');
+    }
   }
 };
 
@@ -67,9 +69,9 @@ export const bgg = async <C extends Command>(
   c: C,
   params: CommandParams[C]["params"]
 ): Promise<CommandParams[C]["transformed_response"]> => {
-  let resParams: { [key: string]: string | number } = {};
+  const resParams: { [key: string]: string | number } = {};
 
-  for (let p in params) {
+  for (const p in params) {
     if (typeof params[p] === "boolean") {
       resParams[p] = params[p] ? "1" : "0";
     } else if (Object.prototype.toString.call(params[p]) === "[object Date]") {

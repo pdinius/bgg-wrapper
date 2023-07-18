@@ -25,4 +25,4 @@ export function timeout(n: number, s?: timeString) {
       setTimeout(res, n)
     });
   }
-};
+}
