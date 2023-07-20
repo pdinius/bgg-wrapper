@@ -1,4 +1,4 @@
-import { Command, CommandParams } from "./types";
+import { Command, CommandParams } from "./types/types";
 import {
   transformRawCollectionToCollection,
   transformRawPlaysToPlays,

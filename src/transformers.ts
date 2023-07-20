@@ -10,7 +10,7 @@ import {
   Plays,
   Play,
   SubType,
-} from "./types";
+} from "./types/types";
 import { findFirst } from "./utils";
 
 export const transformRawCollectionToCollection = (
