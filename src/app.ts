@@ -1,19 +1,24 @@
 import { Command, CommandParams } from "./types";
 import {
   transformRawCollectionToCollection,
+  transformRawPlaysToPlays,
   transformRawThingToThing,
 } from "./transformers";
 import { parse } from "browser-xml";
 import { timeout } from "./utils";
+import moment from "moment";
+
+type TransformerFunction<K extends Command> = (
+  arg: CommandParams[K]["raw_response"]
+) => CommandParams[K]["transformed_response"];
 
 const baseUrl = "https://boardgamegeek.com/xmlapi2/";
 const transformerDict: {
-  [key in keyof CommandParams]: (
-    arg: CommandParams[key]["raw_response"]
-  ) => CommandParams[key]["transformed_response"];
+  [key in Command]: TransformerFunction<key>;
 } = {
   collection: transformRawCollectionToCollection,
   thing: transformRawThingToThing,
+  plays: transformRawPlaysToPlays,
 };
 
 const execute = async <T>(url: string, attempts = 5): Promise<T> => {
@@ -27,9 +32,9 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
       await timeout(5, "seconds");
       return execute<T>(url, --attempts);
     }
-    
+
     if (response.status === 429) {
-      const time = Number(response.headers.get('Retry-After'));
+      const time = Number(response.headers.get("Retry-After"));
       if (time) {
         await timeout(time);
       } else {
@@ -46,14 +51,15 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
     if (e instanceof Error) {
       throw Error(e.message);
     } else {
-      throw Error('Failed to fetch from bgg.');
+      throw Error("Failed to fetch from bgg.");
     }
   }
 };
 
-const getWithTimeout = <T>(
-  command: string,
-  params: { [key: string]: string | number }
+const getWithTimeout = async <C extends Command>(
+  command: C,
+  params: { [key: string]: string | number },
+  transformer: TransformerFunction<C>
 ) => {
   // concatenate the url
   const paramsString = Object.entries(params)
@@ -62,29 +68,32 @@ const getWithTimeout = <T>(
   let url = baseUrl + command;
   if (paramsString.length) url += `?${paramsString}`;
 
-  return execute<T>(url);
+  const cacheItem = localStorage.getItem(url);
+  if (cacheItem) {
+    return JSON.parse(cacheItem);
+  } else {
+    const res = transformer(await execute<CommandParams[C]["raw_response"]>(url));
+    localStorage.setItem(url, JSON.stringify(res));
+    return res;
+  }
 };
 
-export const bgg = async <C extends Command>(
+export const bgg = <C extends Command>(
   c: C,
   params: CommandParams[C]["params"]
 ): Promise<CommandParams[C]["transformed_response"]> => {
   const resParams: { [key: string]: string | number } = {};
 
   for (const p in params) {
-    if (typeof params[p] === "boolean") {
-      resParams[p] = params[p] ? "1" : "0";
-    } else if (Object.prototype.toString.call(params[p]) === "[object Date]") {
-      const d: Date = params[p] as Date;
-      resParams[p] =
-        String(d.getFullYear()).slice(2) +
-        String(d.getMonth()).padStart(2, "0") +
-        String(d.getDate()).padStart(2, "0");
+    const el = params[p];
+    if (typeof el === "boolean") {
+      resParams[p] = el ? "1" : "0";
+    } else if (el instanceof Date) {
+      resParams[p] = moment(el).format("YY-MM-DD%20HH:mm:ss");
     } else {
-      resParams[p] = params[p] as string | number;
+      resParams[p] = el as string | number;
     }
   }
 
-  const data = await getWithTimeout<CommandParams[C]["raw_response"]>(c, resParams);
-  return transformerDict[c](data);
+  return getWithTimeout(c, resParams, transformerDict[c]);
 };

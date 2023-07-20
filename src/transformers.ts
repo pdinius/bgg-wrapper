@@ -6,7 +6,12 @@ import {
   Thing,
   RawItem,
   PollResult,
+  RawPlays,
+  Plays,
+  Play,
+  SubType,
 } from "./types";
+import { findFirst } from "./utils";
 
 export const transformRawCollectionToCollection = (
   c: RawCollection
@@ -64,7 +69,9 @@ export const transformRawCollectionToCollection = (
 };
 
 export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
-  const items: RawItem[] = Array.isArray(v.items.item) ? v.items.item : [v.items.item];
+  const items: RawItem[] = Array.isArray(v.items.item)
+    ? v.items.item
+    : [v.items.item];
 
   return items.map((item) => {
     const res: Thing = {
@@ -92,24 +99,28 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
         let res: Array<PollResult> = [];
 
         if (Array.isArray(results)) {
-          res = res.concat(...results.map(({ $, result }) => {
-            return result.map(r => ({
-              option: `${r.value} with ${$.numplayers} player${$.numplayers === '1' ? '' : 's'}`,
-              num_votes: Number(r.numvotes)
-            }))
-          }));
+          res = res.concat(
+            ...results.map(({ $, result }) => {
+              return result.map((r) => ({
+                option: `${r.value} with ${$.numplayers} player${
+                  $.numplayers === "1" ? "" : "s"
+                }`,
+                num_votes: Number(r.numvotes),
+              }));
+            })
+          );
         } else {
           for (let r of results.result) {
-            if ('level' in r) {
+            if ("level" in r) {
               res.push({
                 option: `${r.level} - ${r.value}`,
-                num_votes: Number(r.numvotes)
-              })
+                num_votes: Number(r.numvotes),
+              });
             } else {
               res.push({
                 option: r.value,
-                num_votes: Number(r.numvotes)
-              })
+                num_votes: Number(r.numvotes),
+              });
             }
           }
         }
@@ -118,8 +129,8 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
           name: $.name,
           label: $.title,
           total_votes: Number($.totalvotes),
-          results: res
-        } 
+          results: res,
+        };
       }),
     };
 
@@ -149,4 +160,50 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
 
     return res;
   });
+};
+
+export const transformRawPlaysToPlays = (p: RawPlays): Plays => {
+  return {
+    username: p.plays.$.username,
+    user_id: Number(p.plays.$.userid),
+    total_plays: Number(p.plays.$.total),
+    page: Number(p.plays.$.page),
+    plays: p.plays.play.map((el) => {
+      type subTypeValue = {
+        value: SubType;
+      };
+      let subTypes:
+        | subTypeValue
+        | Array<subTypeValue> = el.item.subtypes.subtype;
+      let subTypesArr: Array<subTypeValue>;
+      const subTypeList: Array<SubType> = ["boardgame", "boardgameexpansion", "boardgameaccessory"];
+      if (!Array.isArray(subTypes)) {
+        subTypesArr = [subTypes];
+      } else {
+        subTypesArr = subTypes;
+      }
+      const res: Play = {
+        id: Number(el.$.id),
+        date: new Date(el.$.date),
+        quantity: Number(el.$.quantity),
+        length: Number(el.$.length),
+        incomplete: el.$.incomplete === "1",
+        now_in_stats: el.$.incomplete === "1",
+        game: {
+          name: el.item.$.name,
+          id: Number(el.item.$.objectid),
+          subtype:
+            findFirst(
+              subTypesArr,
+              subTypeList,
+              (el) => el.value
+            ) || "boardgame",
+        },
+      };
+      if (el.$.location) {
+        res.location = el.$.location;
+      }
+      return res;
+    }),
+  };
 };

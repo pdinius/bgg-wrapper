@@ -1,5 +1,6 @@
 export type SubType = "boardgame" | "boardgameexpansion" | "boardgameaccessory";
 
+/* Collection Types*/
 export type RawCollectionItem = {
   $: {
     objecttype: string;
@@ -126,6 +127,7 @@ export type Collection = {
   items: Array<CollectionItem>;
 };
 
+/* Thing Types */
 export type RawItem = {
   $: {
     type: SubType;
@@ -326,14 +328,78 @@ export type Thing = {
   };
 };
 
-export type Command = "collection" | "thing";
+/* Plays Types */
+export type RawPlays = {
+  plays: {
+    $: {
+      username: string;
+      userid: string;
+      total: string;
+      page: string;
+      termsofuse: string;
+    };
+    play: Array<
+      {
+        $: {
+          id: string;
+          date: string;
+          quantity: string;
+          length: string;
+          incomplete: string;
+          nowinstats: string;
+          location?: string;
+        };
+        item: {
+          $: {
+            name: string;
+            objecttype: string;
+            objectid: string;
+          };
+          subtypes: {
+            subtype: {
+              value: SubType;
+            } | Array<{
+              value: SubType;
+            }>;
+          };
+        };
+      }
+    >;
+  };
+};
+
+export type Play = {
+  id: number;
+  date: Date;
+  quantity: number;
+  length: number;
+  incomplete: boolean;
+  now_in_stats: boolean;
+  location?: string;
+  game: {
+    name: string;
+    id: number;
+    subtype: SubType;
+  }
+}
+
+export type Plays = {
+  username: string;
+  user_id: number;
+  total_plays: number;
+  page: number;
+  plays: Array<Play>;
+};
+
+/* Command Definitions and Types */
+export type Command = "collection" | "thing" | "plays";
 
 type CommandParamsDef = {
   [key in Command]: {
-    raw_response: RawCollection | RawThing;
-    transformed_response: Collection | Array<Thing>;
+    raw_response: RawCollection | RawThing | RawPlays;
+    transformed_response: Collection | Array<Thing> | Plays;
     params: {
-      [key: string]: string | number | Array<number> | boolean | Date
+      [key: string]: string | number | Array<number> | boolean | Date;
     };
   };
 };
@@ -341,6 +407,7 @@ type CommandParamsDef = {
 export interface CommandParams extends CommandParamsDef {
   collection: {
     raw_response: RawCollection;
+    transformed_response: Collection;
     params: {
       username: string;
       // version?: number;
@@ -372,10 +439,10 @@ export interface CommandParams extends CommandParamsDef {
       // showprivate?: boolean;
       modifiedsince?: Date;
     };
-    transformed_response: Collection;
   };
   thing: {
     raw_response: RawThing;
+    transformed_response: Array<Thing>;
     params: {
       id: number | Array<number>;
       // type?: SubType;
@@ -388,6 +455,18 @@ export interface CommandParams extends CommandParamsDef {
       // page?: number;
       // pagesize?: number; // between 10 and 100
     };
-    transformed_response: Array<Thing>;
+  };
+  plays: {
+    raw_response: RawPlays;
+    transformed_response: Plays;
+    params: {
+      username: string;
+      id?: number;
+      type?: "thing" | "family";
+      mindate?: Date;
+      maxdate?: Date;
+      subtype?: SubType;
+      page?: number;
+    };
   };
 }

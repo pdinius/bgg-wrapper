@@ -18,11 +18,26 @@ export function timeout(n: number): Promise<undefined>;
 export function timeout(n: number, s?: timeString) {
   if (s) {
     return new Promise((res, _) => {
-      setTimeout(res, t(n, s))
+      setTimeout(res, t(n, s));
     });
   } else {
     return new Promise((res, _) => {
-      setTimeout(res, n)
+      setTimeout(res, n);
     });
   }
 }
+
+export const findFirst = <T, S>(
+  arr: Array<T>,
+  search: Array<S>,
+  get: (el: T) => string
+): S | null => {
+  for (let s of search) {
+    for (let el of arr) {
+      if (get(el) === s) {
+        return s;
+      }
+    }
+  }
+  return null;
+};
