@@ -2,6 +2,7 @@ import { Command, CommandParams } from "./types/types";
 import {
   transformRawCollectionToCollection,
   transformRawPlaysToPlays,
+  transformRawSearchToSearch,
   transformRawThingToThing,
 } from "./transformers";
 import { parse } from "browser-xml";
@@ -21,6 +22,7 @@ const transformerDict: {
   collection: transformRawCollectionToCollection,
   thing: transformRawThingToThing,
   plays: transformRawPlaysToPlays,
+  search: transformRawSearchToSearch,
 };
 
 const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
@@ -28,6 +30,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     throw Error("Ran out of attempts.");
   }
   try {
+    if (attempts === MAX_ATTEMPTS) console.log(url);
     console.log(`Attempt #${MAX_ATTEMPTS + 1 - attempts} of ${MAX_ATTEMPTS}.`)
     const response = await fetch(url);
 

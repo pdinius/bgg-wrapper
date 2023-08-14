@@ -336,6 +336,40 @@ export type Thing = {
   };
 };
 
+/* Search Types */
+type SearchResult = {
+  $: {
+    type: SubType;
+    id: number;
+  };
+  name: {
+    type: "primary" | "alternate";
+    value: string;
+  };
+  yearpublished?: {
+    value: number;
+  }
+}
+
+export type RawSearch = {
+  items: {
+    $: {
+      total: number;
+      termsofuse: string;
+    }
+    item: Array<SearchResult> | SearchResult;
+  } | {
+    total: number;
+    termsofuse: string;
+  }
+}
+
+export type Search = Array<{
+  id: number;
+  name: string;
+  year_published?: number;
+}>
+
 /* Plays Types */
 export type RawPlays = {
   plays: {
@@ -400,12 +434,12 @@ export type Plays = {
 };
 
 /* Command Definitions and Types */
-export type Command = "collection" | "thing" | "plays";
+export type Command = "collection" | "thing" | "plays" | "search";
 
 type CommandParamsDef = {
   [key in Command]: {
-    raw_response: RawCollection | RawThing | RawPlays;
-    transformed_response: Collection | Array<Thing> | Plays;
+    raw_response: RawCollection | RawThing | RawPlays | RawSearch;
+    transformed_response: Collection | Array<Thing> | Plays | Search;
     params: {
       [key: string]: string | number | Array<number> | boolean | Date;
     };
@@ -477,4 +511,13 @@ export interface CommandParams extends CommandParamsDef {
       page?: number;
     };
   };
+  search: {
+    raw_response: RawSearch;
+    transformed_response: Search;
+    params: {
+      query: string;
+      type?: SubType;
+      exact?: boolean;
+    };
+  }
 }

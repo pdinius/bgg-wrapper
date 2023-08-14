@@ -10,6 +10,8 @@ import {
   Plays,
   Play,
   SubType,
+  RawSearch,
+  Search,
 } from "./types/types";
 import { findFirst } from "./utils";
 
@@ -75,14 +77,16 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
 
   return items.map((item) => {
     const res: Thing = {
-      name: Array.isArray(item.name) ? item.name?.find((n) => n.type === "primary")!.value : item.name.value,
+      name: Array.isArray(item.name)
+        ? item.name?.find((n) => n.type === "primary")!.value
+        : item.name.value,
       id: Number(item.$.id),
       type: item.$.type,
       image_url: item.image,
       thumbnail_url: item.thumbnail,
-      alternate_names: Array.isArray(item.name) ? item.name
-        .filter((n) => n.type === "alternate")
-        .map((n) => n.value) : [],
+      alternate_names: Array.isArray(item.name)
+        ? item.name.filter((n) => n.type === "alternate").map((n) => n.value)
+        : [],
       description: item.description,
       year_published: Number(item.yearpublished.value),
       min_players: Number(item.minplayers.value),
@@ -140,19 +144,23 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
         num_ratings: Number(s.usersrated.value),
         rating: Number(s.average.value),
         geek_rating: Number(s.bayesaverage.value),
-        ranks: Array.isArray(s.ranks.rank) ? s.ranks.rank.map(({ type, id, friendlyname, value }) => {
-          return {
-            type: type,
-            id: Number(id),
-            label: friendlyname,
-            rank: Number(value),
-          };
-        }) : [{
-          type: s.ranks.rank.type,
-          id: Number(s.ranks.rank.id),
-          label: s.ranks.rank.friendlyname,
-          rank: Number(s.ranks.rank.value),
-        }],
+        ranks: Array.isArray(s.ranks.rank)
+          ? s.ranks.rank.map(({ type, id, friendlyname, value }) => {
+              return {
+                type: type,
+                id: Number(id),
+                label: friendlyname,
+                rank: Number(value),
+              };
+            })
+          : [
+              {
+                type: s.ranks.rank.type,
+                id: Number(s.ranks.rank.id),
+                label: s.ranks.rank.friendlyname,
+                rank: Number(s.ranks.rank.value),
+              },
+            ],
         num_owners: Number(s.owned.value),
         num_trading: Number(s.trading.value),
         num_wanting: Number(s.wanting.value),
@@ -177,11 +185,14 @@ export const transformRawPlaysToPlays = (p: RawPlays): Plays => {
       type subTypeValue = {
         value: SubType;
       };
-      let subTypes:
-        | subTypeValue
-        | Array<subTypeValue> = el.item.subtypes.subtype;
+      let subTypes: subTypeValue | Array<subTypeValue> =
+        el.item.subtypes.subtype;
       let subTypesArr: Array<subTypeValue>;
-      const subTypeList: Array<SubType> = ["boardgame", "boardgameexpansion", "boardgameaccessory"];
+      const subTypeList: Array<SubType> = [
+        "boardgame",
+        "boardgameexpansion",
+        "boardgameaccessory",
+      ];
       if (!Array.isArray(subTypes)) {
         subTypesArr = [subTypes];
       } else {
@@ -198,11 +209,8 @@ export const transformRawPlaysToPlays = (p: RawPlays): Plays => {
           name: el.item.$.name,
           id: Number(el.item.$.objectid),
           subtype:
-            findFirst(
-              subTypesArr,
-              subTypeList,
-              (el) => el.value
-            ) || "boardgame",
+            findFirst(subTypesArr, subTypeList, (el) => el.value) ||
+            "boardgame",
         },
       };
       if (el.$.location) {
@@ -211,4 +219,23 @@ export const transformRawPlaysToPlays = (p: RawPlays): Plays => {
       return res;
     }),
   };
+};
+
+export const transformRawSearchToSearch = (s: RawSearch): Search => {
+  if ("item" in s.items) {
+    const res = Array.isArray(s.items.item) ? s.items.item.filter((item) => {
+      return (
+        (item.$.type === "boardgame" || item.$.type === "boardgameexpansion") &&
+        item.name.type === "primary"
+      );
+    }) : [s.items.item];
+
+    return res.map(item => ({
+      id: item.$.id,
+      name: item.name.value,
+      year_published: item.yearpublished?.value
+    }));
+  } else {
+    return [];
+  }
 };
