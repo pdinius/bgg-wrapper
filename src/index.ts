@@ -30,8 +30,6 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     throw Error("Ran out of attempts.");
   }
   try {
-    if (attempts === MAX_ATTEMPTS) console.log(url);
-    console.log(`Attempt #${MAX_ATTEMPTS + 1 - attempts} of ${MAX_ATTEMPTS}.`)
     const response = await fetch(url);
 
     if (response.status === 202) {
