@@ -68,12 +68,16 @@ const getWithTimeout = async <C extends Command>(
   let url = baseUrl + command;
   if (paramsString.length) url += `?${paramsString}`;
 
-  const cacheItem = localStorage.getItem(url);
+  let cacheItem: string | null = "";
+  if (typeof window !== "undefined") {
+    cacheItem = localStorage.getItem(url);
+  }
+
   if (cacheItem) {
     return JSON.parse(cacheItem);
   } else {
     const res = transformer(await execute<CommandParams[C]["raw_response"]>(url));
-    localStorage.setItem(url, JSON.stringify(res));
+    if (typeof window !== "undefined") localStorage.setItem(url, JSON.stringify(res));
     return res;
   }
 };

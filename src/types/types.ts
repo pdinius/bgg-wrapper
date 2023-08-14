@@ -128,6 +128,15 @@ export type Collection = {
 };
 
 /* Thing Types */
+type Rank = {
+  type: string;
+  id: string;
+  name: string;
+  friendlyname: string;
+  value: string;
+  bayesaverage: string;
+};
+
 export type RawItem = {
   $: {
     type: SubType;
@@ -135,11 +144,17 @@ export type RawItem = {
   };
   thumbnail: string;
   image: string;
-  name: Array<{
-    type: "primary" | "alternate";
-    sortindex: string;
-    value: string;
-  }>;
+  name:
+    | Array<{
+        type: "primary" | "alternate";
+        sortindex: string;
+        value: string;
+      }>
+    | {
+        type: "primary" | "alternate";
+        sortindex: string;
+        value: string;
+      };
   description: string;
   yearpublished: {
     value: string;
@@ -227,14 +242,7 @@ export type RawItem = {
         value: string;
       };
       ranks: {
-        rank: Array<{
-          type: string;
-          id: string;
-          name: string;
-          friendlyname: string;
-          value: string;
-          bayesaverage: string;
-        }>;
+        rank: Rank | Array<Rank>;
       };
       stddev: {
         value: string;
@@ -338,33 +346,33 @@ export type RawPlays = {
       page: string;
       termsofuse: string;
     };
-    play: Array<
-      {
+    play: Array<{
+      $: {
+        id: string;
+        date: string;
+        quantity: string;
+        length: string;
+        incomplete: string;
+        nowinstats: string;
+        location?: string;
+      };
+      item: {
         $: {
-          id: string;
-          date: string;
-          quantity: string;
-          length: string;
-          incomplete: string;
-          nowinstats: string;
-          location?: string;
+          name: string;
+          objecttype: string;
+          objectid: string;
         };
-        item: {
-          $: {
-            name: string;
-            objecttype: string;
-            objectid: string;
-          };
-          subtypes: {
-            subtype: {
-              value: SubType;
-            } | Array<{
-              value: SubType;
-            }>;
-          };
+        subtypes: {
+          subtype:
+            | {
+                value: SubType;
+              }
+            | Array<{
+                value: SubType;
+              }>;
         };
-      }
-    >;
+      };
+    }>;
   };
 };
 
@@ -380,8 +388,8 @@ export type Play = {
     name: string;
     id: number;
     subtype: SubType;
-  }
-}
+  };
+};
 
 export type Plays = {
   username: string;
