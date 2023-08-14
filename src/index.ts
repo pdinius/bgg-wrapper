@@ -8,6 +8,8 @@ import { parse } from "browser-xml";
 import { timeout } from "./utils";
 import moment from "moment";
 
+const MAX_ATTEMPTS = 10;
+
 type TransformerFunction<K extends Command> = (
   arg: CommandParams[K]["raw_response"]
 ) => CommandParams[K]["transformed_response"];
@@ -21,11 +23,12 @@ const transformerDict: {
   plays: transformRawPlaysToPlays,
 };
 
-const execute = async <T>(url: string, attempts = 5): Promise<T> => {
+const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
   if (attempts === 0) {
     throw Error("Ran out of attempts.");
   }
   try {
+    console.log(`Attempt #${MAX_ATTEMPTS + 1 - attempts} of ${MAX_ATTEMPTS}.`)
     const response = await fetch(url);
 
     if (response.status === 202) {
@@ -38,7 +41,7 @@ const execute = async <T>(url: string, attempts = 5): Promise<T> => {
       if (time) {
         await timeout(time);
       } else {
-        await timeout(15, "seconds");
+        await timeout(20, "seconds");
       }
       return execute(url, --attempts);
     } else if (response.status >= 400) {
