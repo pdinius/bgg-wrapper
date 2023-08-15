@@ -30,22 +30,10 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     throw Error("Ran out of attempts.");
   }
   try {
+    console.log(`Attempt #${MAX_ATTEMPTS + 1 - attempts} of ${MAX_ATTEMPTS}`);
     const response = await fetch(url);
 
-    if (response.status === 202) {
-      await timeout(2, "seconds");
-      return execute<T>(url, --attempts);
-    }
-
-    if (response.status === 429) {
-      const time = Number(response.headers.get("Retry-After"));
-      if (time) {
-        await timeout(time);
-      } else {
-        await timeout(20, "seconds");
-      }
-      return execute(url, --attempts);
-    } else if (response.status >= 400) {
+    if (response.status >= 400) {
       throw Error(await response.text());
     }
 
@@ -53,10 +41,11 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     
     return parse<T>(data);
   } catch (e) {
-    console.log('ERRORRRRR')
-    console.log(e);
-    if (e instanceof Error) {
-      console.log(Object.keys(e));
+    if (e instanceof TypeError) {
+      console.log('Backing off for 10 seconds.')
+      await timeout(10, "seconds");
+      return execute(url, --attempts);
+    } else if (e instanceof Error) {
       throw Error(e.message);
     } else {
       throw Error("Failed to fetch from bgg.");
@@ -67,7 +56,8 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
 const getWithTimeout = async <C extends Command>(
   command: C,
   params: { [key: string]: string | number },
-  transformer: TransformerFunction<C>
+  transformer: TransformerFunction<C>,
+  useCache: boolean
 ) => {
   // concatenate the url
   const paramsString = Object.entries(params)
@@ -77,9 +67,8 @@ const getWithTimeout = async <C extends Command>(
   if (paramsString.length) url += `?${paramsString}`;
 
   let cacheItem: string | null = "";
-  if (typeof window !== "undefined") {
-    console.log('local storage');
-    //cacheItem = localStorage.getItem(url);
+  if (useCache && typeof window !== "undefined") {
+    cacheItem = localStorage.getItem(url);
   }
 
   if (cacheItem) {
@@ -93,7 +82,8 @@ const getWithTimeout = async <C extends Command>(
 
 export const bgg = <C extends Command>(
   c: C,
-  params: CommandParams[C]["params"]
+  params: CommandParams[C]["params"],
+  useCache = true
 ): Promise<CommandParams[C]["transformed_response"]> => {
   const resParams: { [key: string]: string | number } = {};
 
@@ -108,5 +98,5 @@ export const bgg = <C extends Command>(
     }
   }
 
-  return getWithTimeout(c, resParams, transformerDict[c]);
+  return getWithTimeout(c, resParams, transformerDict[c], useCache);
 };
