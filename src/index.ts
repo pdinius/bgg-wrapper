@@ -37,10 +37,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
       return execute<T>(url, --attempts);
     }
 
-    console.log(response.status);
-
     if (response.status === 429) {
-      console.log('HELLO');
       const time = Number(response.headers.get("Retry-After"));
       if (time) {
         await timeout(time);
@@ -59,6 +56,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     console.log('ERRORRRRR')
     console.log(e);
     if (e instanceof Error) {
+      console.log(Object.keys(e));
       throw Error(e.message);
     } else {
       throw Error("Failed to fetch from bgg.");
