@@ -31,11 +31,13 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
   }
   try {
     const response = await fetch(url);
-    await timeout(2, "seconds");
 
     if (response.status === 202) {
+      await timeout(2, "seconds");
       return execute<T>(url, --attempts);
     }
+
+    console.log(response.status);
 
     if (response.status === 429) {
       console.log('HELLO');
@@ -54,6 +56,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     
     return parse<T>(data);
   } catch (e) {
+    console.log(e);
     if (e instanceof Error) {
       throw Error(e.message);
     } else {
