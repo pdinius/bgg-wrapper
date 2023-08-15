@@ -76,6 +76,7 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
     : [v.items.item];
 
   return items.map((item) => {
+    console.log(item.yearpublished)
     const res: Thing = {
       name: Array.isArray(item.name)
         ? item.name?.find((n) => n.type === "primary")!.value
@@ -88,18 +89,18 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
         ? item.name.filter((n) => n.type === "alternate").map((n) => n.value)
         : [],
       description: item.description,
-      year_published: Number(item.yearpublished.value),
-      min_players: Number(item.minplayers.value),
-      max_players: Number(item.maxplayers.value),
-      min_playtime: Number(item.minplaytime.value),
-      max_playtime: Number(item.maxplaytime.value),
-      min_age: Number(item.minage.value),
+      year_published: item.yearpublished ? Number(item.yearpublished.value) : -1,
+      min_players: item.minplayers ? Number(item.minplayers.value) : -1,
+      max_players: item.maxplayers ? Number(item.maxplayers.value) : -1,
+      min_playtime: item.minplaytime ? Number(item.minplaytime.value) : -1,
+      max_playtime: item.maxplaytime ? Number(item.maxplaytime.value) : -1,
+      min_age: item.minage ? Number(item.minage.value) : -1,
       related_items: item.link.map(({ type, id, value }) => ({
         name: value,
         id: Number(id),
         type,
       })),
-      polls: item.poll.map(({ $, results }) => {
+      polls: item.poll ? item.poll.map(({ $, results }) => {
         let res: Array<PollResult> = [];
 
         if (Array.isArray(results)) {
@@ -135,7 +136,7 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
           total_votes: Number($.totalvotes),
           results: res,
         };
-      }),
+      }) : [],
     };
 
     if (item.statistics) {
