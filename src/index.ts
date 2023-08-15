@@ -33,6 +33,10 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     console.log(`Attempt #${MAX_ATTEMPTS + 1 - attempts} of ${MAX_ATTEMPTS}`);
     const response = await fetch(url);
 
+    if (response.status === 202) {
+      await timeout(3, "seconds");
+      return execute(url, --attempts);
+    }
     if (response.status >= 400) {
       throw Error(await response.text());
     }
@@ -41,11 +45,12 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     
     return parse<T>(data);
   } catch (e) {
-    if (e instanceof TypeError) {
-      console.log('Backing off for 10 seconds.')
-      await timeout(10, "seconds");
-      return execute(url, --attempts);
-    } else if (e instanceof Error) {
+    if (e instanceof Error) {
+      if (e.message.includes("Rate limit exceeded")) {
+        console.log("Backing off for 10 seconds.");
+        await timeout(10, "seconds");
+        return execute(url, --attempts);
+      }
       throw Error(e.message);
     } else {
       throw Error("Failed to fetch from bgg.");
@@ -74,8 +79,11 @@ const getWithTimeout = async <C extends Command>(
   if (cacheItem) {
     return JSON.parse(cacheItem);
   } else {
-    const res = transformer(await execute<CommandParams[C]["raw_response"]>(url));
-    if (typeof window !== "undefined") localStorage.setItem(url, JSON.stringify(res));
+    const res = transformer(
+      await execute<CommandParams[C]["raw_response"]>(url)
+    );
+    if (typeof window !== "undefined")
+      localStorage.setItem(url, JSON.stringify(res));
     return res;
   }
 };
