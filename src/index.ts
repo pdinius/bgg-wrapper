@@ -74,7 +74,7 @@ const getWithTimeout = async <C extends Command>(
 
   let cacheItem: string | null = "";
   if (typeof window !== "undefined") {
-    cacheItem = localStorage.getItem(url);
+    //cacheItem = localStorage.getItem(url);
   }
 
   if (cacheItem) {
