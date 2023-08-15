@@ -56,6 +56,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     
     return parse<T>(data);
   } catch (e) {
+    console.log('ERRORRRRR')
     console.log(e);
     if (e instanceof Error) {
       throw Error(e.message);
