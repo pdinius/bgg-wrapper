@@ -50,6 +50,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     }
 
     const data = await response.text();
+    
     return parse<T>(data);
   } catch (e) {
     if (e instanceof Error) {

@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "browser-xml": "1.0.2",
+    "browser-xml": "^1.0.3",
     "moment": "^2.29.4"
   }
 }
