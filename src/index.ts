@@ -38,6 +38,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS): Promise<T> => {
     }
 
     if (response.status === 429) {
+      console.log('HELLO');
       const time = Number(response.headers.get("Retry-After"));
       if (time) {
         await timeout(time);
