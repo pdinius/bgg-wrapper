@@ -76,7 +76,6 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
     : [v.items.item];
 
   return items.map((item) => {
-    console.log(item.yearpublished)
     const res: Thing = {
       name: Array.isArray(item.name)
         ? item.name?.find((n) => n.type === "primary")!.value
