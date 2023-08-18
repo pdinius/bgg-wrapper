@@ -46,14 +46,7 @@ export type RawCollectionItem = {
         value: string;
       };
       ranks: {
-        rank: Array<{
-          type: string;
-          id: string;
-          name: string;
-          friendlyname: string;
-          value: string;
-          bayesaverage: string;
-        }>;
+        rank: Array<Rank> | Rank;
       };
     };
   };

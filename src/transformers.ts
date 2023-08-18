@@ -45,14 +45,25 @@ export const transformRawCollectionToCollection = (
       res.num_users_rated = Number(v.stats.rating.usersrated.value);
       res.avg_user_rating = Number(v.stats.rating.average.value);
       res.geek_rating = Number(v.stats.rating.bayesaverage.value);
-      res.ranks = v.stats.rating.ranks.rank.map((r) => ({
-        type: r.type,
-        id: Number(r.id),
-        name: r.name,
-        label: r.friendlyname,
-        rank: Number(r.value),
-        avg_rating: Number(r.bayesaverage),
-      }));
+      res.ranks = Array.isArray(v.stats.rating.ranks.rank)
+        ? v.stats.rating.ranks.rank.map((r) => ({
+            type: r.type,
+            id: Number(r.id),
+            name: r.name,
+            label: r.friendlyname,
+            rank: Number(r.value),
+            avg_rating: Number(r.bayesaverage),
+          }))
+        : [
+            {
+              type: v.stats.rating.ranks.rank.type,
+              id: Number(v.stats.rating.ranks.rank.id),
+              name: v.stats.rating.ranks.rank.name,
+              label: v.stats.rating.ranks.rank.friendlyname,
+              rank: Number(v.stats.rating.ranks.rank.value),
+              avg_rating: Number(v.stats.rating.ranks.rank.bayesaverage),
+            },
+          ];
       res.stats = {
         min_players: Number(v.stats.$.minplayers),
         max_players: Number(v.stats.$.maxplayers),
@@ -88,7 +99,9 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
         ? item.name.filter((n) => n.type === "alternate").map((n) => n.value)
         : [],
       description: item.description,
-      year_published: item.yearpublished ? Number(item.yearpublished.value) : -1,
+      year_published: item.yearpublished
+        ? Number(item.yearpublished.value)
+        : -1,
       min_players: item.minplayers ? Number(item.minplayers.value) : -1,
       max_players: item.maxplayers ? Number(item.maxplayers.value) : -1,
       min_playtime: item.minplaytime ? Number(item.minplaytime.value) : -1,
@@ -99,43 +112,45 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
         id: Number(id),
         type,
       })),
-      polls: item.poll ? item.poll.map(({ $, results }) => {
-        let res: Array<PollResult> = [];
+      polls: item.poll
+        ? item.poll.map(({ $, results }) => {
+            let res: Array<PollResult> = [];
 
-        if (Array.isArray(results)) {
-          res = res.concat(
-            ...results.map(({ $, result }) => {
-              return result.map((r) => ({
-                option: `${r.value} with ${$.numplayers} player${
-                  $.numplayers === "1" ? "" : "s"
-                }`,
-                num_votes: Number(r.numvotes),
-              }));
-            })
-          );
-        } else {
-          for (let r of results.result) {
-            if ("level" in r) {
-              res.push({
-                option: `${r.level} - ${r.value}`,
-                num_votes: Number(r.numvotes),
-              });
+            if (Array.isArray(results)) {
+              res = res.concat(
+                ...results.map(({ $, result }) => {
+                  return result.map((r) => ({
+                    option: `${r.value} with ${$.numplayers} player${
+                      $.numplayers === "1" ? "" : "s"
+                    }`,
+                    num_votes: Number(r.numvotes),
+                  }));
+                })
+              );
             } else {
-              res.push({
-                option: r.value,
-                num_votes: Number(r.numvotes),
-              });
+              for (let r of results.result) {
+                if ("level" in r) {
+                  res.push({
+                    option: `${r.level} - ${r.value}`,
+                    num_votes: Number(r.numvotes),
+                  });
+                } else {
+                  res.push({
+                    option: r.value,
+                    num_votes: Number(r.numvotes),
+                  });
+                }
+              }
             }
-          }
-        }
 
-        return {
-          name: $.name,
-          label: $.title,
-          total_votes: Number($.totalvotes),
-          results: res,
-        };
-      }) : [],
+            return {
+              name: $.name,
+              label: $.title,
+              total_votes: Number($.totalvotes),
+              results: res,
+            };
+          })
+        : [],
     };
 
     if (item.statistics) {
@@ -223,17 +238,20 @@ export const transformRawPlaysToPlays = (p: RawPlays): Plays => {
 
 export const transformRawSearchToSearch = (s: RawSearch): Search => {
   if ("item" in s.items) {
-    const res = Array.isArray(s.items.item) ? s.items.item.filter((item) => {
-      return (
-        (item.$.type === "boardgame" || item.$.type === "boardgameexpansion") &&
-        item.name.type === "primary"
-      );
-    }) : [s.items.item];
+    const res = Array.isArray(s.items.item)
+      ? s.items.item.filter((item) => {
+          return (
+            (item.$.type === "boardgame" ||
+              item.$.type === "boardgameexpansion") &&
+            item.name.type === "primary"
+          );
+        })
+      : [s.items.item];
 
-    return res.map(item => ({
+    return res.map((item) => ({
       id: item.$.id,
       name: item.name.value,
-      year_published: item.yearpublished?.value
+      year_published: item.yearpublished?.value,
     }));
   } else {
     return [];

@@ -47,8 +47,8 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS, attempt = 1): Pr
   } catch (e) {
     if (e instanceof Error) {
       console.error(e.message);
-      console.log("Backing off for 10 seconds.");
-      await timeout(10, "seconds");
+      console.log("Backing off for 15 seconds.");
+      await timeout(15, "seconds");
       return execute(url, --attempts, ++attempt);
     } else {
       // should never get here
