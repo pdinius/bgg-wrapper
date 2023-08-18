@@ -131,8 +131,6 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
                 })
               );
             } else {
-              console.log('FAILURE');
-              console.log(p.results);
               for (let r of p.results.result) {
                 if ("level" in r) {
                   res.push({
