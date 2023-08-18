@@ -158,51 +158,56 @@ export type RawItem = {
   maxplayers: {
     value: string;
   };
-  poll: [
-    {
-      $: {
-        name: "suggested_numplayers";
-        title: string;
-        totalvotes: string;
-      };
-      results: Array<{
+  poll: Array<
+    | {
         $: {
-          numplayers: string;
+          name: "suggested_numplayers";
+          title: string;
+          totalvotes: string;
         };
-        result: Array<{
-          value: string;
-          numvotes: string;
+        results: Array<{
+          $: {
+            numplayers: string;
+          };
+          result: Array<{
+            value: string;
+            numvotes: string;
+          }>;
         }>;
-      }>;
-    },
-    {
-      $: {
-        name: "suggested_playerage";
-        title: string;
-        totalvotes: string;
-      };
-      results: {
-        result: Array<{
-          value: string;
-          numvotes: string;
-        }>;
-      };
-    },
-    {
-      $: {
-        name: "language_dependence";
-        title: string;
-        totalvotes: string;
-      };
-      results: {
-        result: Array<{
-          level: string;
-          value: string;
-          numvotes: string;
-        }>;
-      };
+      }
+    | {
+        $: {
+          name: "suggested_playerage";
+          title: string;
+          totalvotes: string;
+        };
+        results: {
+          result: Array<{
+            value: string;
+            numvotes: string;
+          }>;
+        };
+      }
+    | {
+        $: {
+          name: "language_dependence";
+          title: string;
+          totalvotes: string;
+        };
+        results: {
+          result: Array<{
+            level: string;
+            value: string;
+            numvotes: string;
+          }>;
+        };
+      }
+    | {
+      name: string;
+      title: string;
+      totalvotes: 0;
     }
-  ];
+  >;
   playingtime: {
     value: string;
   };
@@ -341,27 +346,29 @@ type SearchResult = {
   };
   yearpublished?: {
     value: number;
-  }
-}
+  };
+};
 
 export type RawSearch = {
-  items: {
-    $: {
-      total: number;
-      termsofuse: string;
-    }
-    item: Array<SearchResult> | SearchResult;
-  } | {
-    total: number;
-    termsofuse: string;
-  }
-}
+  items:
+    | {
+        $: {
+          total: number;
+          termsofuse: string;
+        };
+        item: Array<SearchResult> | SearchResult;
+      }
+    | {
+        total: number;
+        termsofuse: string;
+      };
+};
 
 export type Search = Array<{
   id: number;
   name: string;
   year_published?: number;
-}>
+}>;
 
 /* Plays Types */
 export type RawPlays = {
@@ -512,5 +519,5 @@ export interface CommandParams extends CommandParamsDef {
       type?: SubType;
       exact?: boolean;
     };
-  }
+  };
 }

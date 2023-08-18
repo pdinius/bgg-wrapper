@@ -12,6 +12,7 @@ import {
   SubType,
   RawSearch,
   Search,
+  Poll,
 } from "./types/types";
 import { findFirst } from "./utils";
 
@@ -113,12 +114,14 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
         type,
       })),
       polls: item.poll
-        ? item.poll.map(({ $, results }) => {
+        ? item.poll.map((p) => {
             let res: Array<PollResult> = [];
 
-            if (Array.isArray(results)) {
+            if (!("results" in p)) {
+              return undefined;
+            } else if (Array.isArray(p.results)) {
               res = res.concat(
-                ...results.map(({ $, result }) => {
+                ...p.results.map(({ $, result }) => {
                   return result.map((r) => ({
                     option: `${r.value} with ${$.numplayers} player${
                       $.numplayers === "1" ? "" : "s"
@@ -128,7 +131,9 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
                 })
               );
             } else {
-              for (let r of results.result) {
+              console.log('FAILURE');
+              console.log(p.results);
+              for (let r of p.results.result) {
                 if ("level" in r) {
                   res.push({
                     option: `${r.level} - ${r.value}`,
@@ -144,12 +149,12 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
             }
 
             return {
-              name: $.name,
-              label: $.title,
-              total_votes: Number($.totalvotes),
+              name: p.$.name,
+              label: p.$.title,
+              total_votes: Number(p.$.totalvotes),
               results: res,
             };
-          })
+          }).filter(v => v !== undefined) as  Array<Poll>
         : [],
     };
 
