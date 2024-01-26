@@ -28,21 +28,21 @@ export const transformRawCollectionToCollection = (
       image_url: v.image,
       thumbnail_url: v.thumbnail,
       status: {
-        own: v.status.own === "1",
-        prev_owned: v.status.prevowned === "1",
-        for_trade: v.status.fortrade === "1",
-        want: v.status.want === "1",
-        want_to_play: v.status.wanttoplay === "1",
-        want_to_buy: v.status.wanttobuy === "1",
-        wishlist: v.status.wishlist === "1",
-        preordered: v.status.preordered === "1",
+        own: v.status.own === 1,
+        prev_owned: v.status.prevowned === 1,
+        for_trade: v.status.fortrade === 1,
+        want: v.status.want === 1,
+        want_to_play: v.status.wanttoplay === 1,
+        want_to_buy: v.status.wanttobuy === 1,
+        wishlist: v.status.wishlist === 1,
+        preordered: v.status.preordered === 1,
         last_modified: new Date(v.status.lastmodified),
       },
       num_plays: Number(v.numplays),
     };
 
     if (v.stats) {
-      res.rating = Number(v.stats.rating.$.value);
+      res.rating = Number(v.stats.rating.$.value) || undefined;
       res.num_users_rated = Number(v.stats.rating.usersrated.value);
       res.avg_user_rating = Number(v.stats.rating.average.value);
       res.geek_rating = Number(v.stats.rating.bayesaverage.value);
@@ -66,10 +66,10 @@ export const transformRawCollectionToCollection = (
             },
           ];
       res.stats = {
-        min_players: Number(v.stats.$.minplayers),
-        max_players: Number(v.stats.$.maxplayers),
-        min_playtime: Number(v.stats.$.minplaytime),
-        max_playtime: Number(v.stats.$.maxplaytime),
+        min_players: Number(v.stats.$.minplayers) || undefined,
+        max_players: Number(v.stats.$.maxplayers) || undefined,
+        min_playtime: Number(v.stats.$.minplaytime) || undefined,
+        max_playtime: Number(v.stats.$.maxplaytime) || undefined,
       };
     }
 
@@ -90,7 +90,7 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
   return items.map((item) => {
     const res: Thing = {
       name: Array.isArray(item.name)
-        ? item.name?.find((n) => n.type === "primary")!.value
+        ? item.name.find((n) => n.type === "primary")!.value
         : item.name.value,
       id: Number(item.$.id),
       type: item.$.type,
@@ -103,10 +103,10 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
       year_published: item.yearpublished
         ? Number(item.yearpublished.value)
         : -1,
-      min_players: item.minplayers ? Number(item.minplayers.value) : -1,
-      max_players: item.maxplayers ? Number(item.maxplayers.value) : -1,
-      min_playtime: item.minplaytime ? Number(item.minplaytime.value) : -1,
-      max_playtime: item.maxplaytime ? Number(item.maxplaytime.value) : -1,
+      min_players: item.minplayers ? Number(item.minplayers.value) : 0,
+      max_players: item.maxplayers ? Number(item.maxplayers.value) : 0,
+      min_playtime: item.minplaytime ? Number(item.minplaytime.value) : 0,
+      max_playtime: item.maxplaytime ? Number(item.maxplaytime.value) : 0,
       min_age: item.minage ? Number(item.minage.value) : -1,
       related_items: item.link.map(({ type, id, value }) => ({
         name: value,
@@ -114,53 +114,62 @@ export const transformRawThingToThing = (v: RawThing): Array<Thing> => {
         type,
       })),
       polls: item.poll
-        ? item.poll.map((p) => {
-            let res: Array<PollResult> = [];
+        ? (item.poll
+            .map((p) => {
+              let res: Array<PollResult> = [];
 
-            if (!("results" in p)) {
-              return undefined;
-            } else if (Array.isArray(p.results)) {
-              res = res.concat(
-                ...p.results.map(({ $, result }) => {
-                  return result.map((r) => ({
-                    option: `${r.value} with ${$.numplayers} player${
-                      $.numplayers === "1" ? "" : "s"
-                    }`,
-                    num_votes: Number(r.numvotes),
-                  }));
-                })
-              );
-            } else {
-              for (let r of p.results.result) {
-                if ("level" in r) {
-                  res.push({
-                    option: `${r.level} - ${r.value}`,
-                    num_votes: Number(r.numvotes),
-                  });
-                } else {
-                  res.push({
-                    option: r.value,
-                    num_votes: Number(r.numvotes),
-                  });
+              if (!("results" in p)) {
+                return undefined;
+              } else if (Array.isArray(p.results)) {
+                res = res.concat(
+                  ...p.results.map(({ $, result }) => {
+                    return result.map((r) => ({
+                      option: `${r.value} with ${$.numplayers} player${
+                        $.numplayers === "1" ? "" : "s"
+                      }`,
+                      num_votes: Number(r.numvotes),
+                    }));
+                  })
+                );
+              } else {
+                if (p.results.result) {
+                  for (let r of p.results.result) {
+                    if ("level" in r) {
+                      res.push({
+                        option: `${r.level} - ${r.value}`,
+                        num_votes: Number(r.numvotes),
+                      });
+                    } else {
+                      res.push({
+                        option: r.value,
+                        num_votes: Number(r.numvotes),
+                      });
+                    }
+                  }
                 }
               }
-            }
 
-            return {
-              name: p.$.name,
-              label: p.$.title,
-              total_votes: Number(p.$.totalvotes),
-              results: res,
-            };
-          }).filter(v => v !== undefined) as  Array<Poll>
+              return {
+                name: p.$.name,
+                label: p.$.title,
+                total_votes: Number(p.$.totalvotes),
+                results: res,
+              };
+            })
+            .filter((v) => v !== undefined) as Array<Poll>)
         : [],
     };
+
+    if (res.min_players === 0) delete res.min_players;
+    if (res.max_players === 0) delete res.max_players;
+    if (res.min_playtime === 0) delete res.min_playtime;
+    if (res.max_playtime === 0) delete res.max_playtime;
 
     if (item.statistics) {
       const s = item.statistics.ratings;
       res.stats = {
         num_ratings: Number(s.usersrated.value),
-        rating: Number(s.average.value),
+        avg_user_rating: Number(s.average.value),
         geek_rating: Number(s.bayesaverage.value),
         ranks: Array.isArray(s.ranks.rank)
           ? s.ranks.rank.map(({ type, id, friendlyname, value }) => {

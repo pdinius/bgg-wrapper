@@ -25,7 +25,11 @@ const transformerDict: {
   search: transformRawSearchToSearch,
 };
 
-const execute = async <T>(url: string, attempts = MAX_ATTEMPTS, attempt = 1): Promise<T> => {
+const execute = async <T>(
+  url: string,
+  attempts = MAX_ATTEMPTS,
+  attempt = 1
+): Promise<T> => {
   if (attempts === 0) {
     throw Error("Ran out of attempts.");
   }
@@ -34,7 +38,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS, attempt = 1): Pr
     const response = await fetch(url);
 
     if (response.status === 202) {
-      await timeout(3, "seconds");
+      await timeout(5, "seconds");
       return execute(url, --attempts, ++attempt);
     }
     if (response.status >= 400) {
@@ -42,7 +46,7 @@ const execute = async <T>(url: string, attempts = MAX_ATTEMPTS, attempt = 1): Pr
     }
 
     const data = await response.text();
-    
+
     return parse<T>(data);
   } catch (e) {
     if (e instanceof Error) {

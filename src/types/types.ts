@@ -1,5 +1,24 @@
 export type SubType = "boardgame" | "boardgameexpansion" | "boardgameaccessory";
 
+type RelatedItemTypes =
+  | "boardgamecategory"
+  | "boardgamemechanic"
+  | "boardgamefamily"
+  | "boardgamedesigner"
+  | "boardgameartist"
+  | "boardgamepublisher"
+  | "boardgameexpansion"
+  | "boardgameaccessory"
+  | "boardgamecompilation"
+  | "boardgameimplementation"
+  | "boardgameintegration";
+
+export type RelatedItem = {
+  name: string;
+  id: number;
+  type: RelatedItemTypes;
+};
+
 /* Collection Types*/
 export type RawCollectionItem = {
   $: {
@@ -51,15 +70,15 @@ export type RawCollectionItem = {
     };
   };
   status: {
-    own: string;
-    prevowned: string;
-    fortrade: string;
-    want: string;
-    wanttoplay: string;
-    wanttobuy: string;
-    wishlist: string;
-    preordered: string;
-    lastmodified: string;
+    own: number;
+    prevowned: number;
+    fortrade: number;
+    want: number;
+    wanttoplay: number;
+    wanttobuy: number;
+    wishlist: number;
+    preordered: number;
+    lastmodified: number;
   };
   numplays: string;
 };
@@ -83,10 +102,10 @@ export type CollectionItem = {
   image_url: string;
   thumbnail_url: string;
   stats?: {
-    min_players: number;
-    max_players: number;
-    min_playtime: number;
-    max_playtime: number;
+    min_players?: number;
+    max_players?: number;
+    min_playtime?: number;
+    max_playtime?: number;
   };
   rating?: number;
   num_users_rated?: number;
@@ -203,10 +222,10 @@ export type RawItem = {
         };
       }
     | {
-      name: string;
-      title: string;
-      totalvotes: 0;
-    }
+        name: string;
+        title: string;
+        totalvotes: 0;
+      }
   >;
   playingtime: {
     value: string;
@@ -221,7 +240,7 @@ export type RawItem = {
     value: string;
   };
   link: Array<{
-    type: string;
+    type: RelatedItemTypes;
     id: string;
     value: string;
   }>;
@@ -303,20 +322,16 @@ export type Thing = {
   alternate_names: Array<string>;
   description: string;
   year_published: number;
-  min_players: number;
-  max_players: number;
-  min_playtime: number;
-  max_playtime: number;
+  min_players?: number;
+  max_players?: number;
+  min_playtime?: number;
+  max_playtime?: number;
   min_age: number;
-  related_items: Array<{
-    name: string;
-    id: number;
-    type: string;
-  }>;
+  related_items: Array<RelatedItem>;
   polls: Array<Poll>;
   stats?: {
     num_ratings: number;
-    rating: number;
+    avg_user_rating: number;
     geek_rating: number;
     ranks: Array<{
       type: string;
