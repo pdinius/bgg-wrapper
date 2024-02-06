@@ -41,7 +41,7 @@ export const transformRawCollectionToCollection = (
       num_plays: Number(v.numplays),
     };
     if (v.status.wishlistpriority !== undefined) {
-      res.status.wishlist_priority = v.status.wishlistpriority;
+      res.status.wishlist_priority = Number(v.status.wishlistpriority);
     }
 
     if (v.stats) {
