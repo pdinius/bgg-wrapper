@@ -79,6 +79,7 @@ export type RawCollectionItem = {
     wishlist: number;
     preordered: number;
     lastmodified: number;
+    wishlistpriority?: number;
   };
   numplays: string;
 };
@@ -129,6 +130,7 @@ export type CollectionItem = {
     wishlist: boolean;
     preordered: boolean;
     last_modified: Date;
+    wishlist_priority?: number;
   };
   num_plays: number;
 };
