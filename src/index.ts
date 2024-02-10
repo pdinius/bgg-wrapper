@@ -8,8 +8,15 @@ import {
 import { parse } from "browser-xml";
 import { timeout } from "./utils";
 import moment from "moment";
-import { GeekListOptions, GeekListRawResponse, GeekListResponse } from "./types/types2";
-import { geeklistTransformer } from "./transformers2";
+import {
+  geeklistTransformer,
+  hotTransformer,
+  searchTransformer,
+} from "./transformers2";
+import { XMLAPI, XMLAPI2 } from "./constants";
+import { HotRawResponse, HotResponse } from "./types/hot";
+import { GeekListOptions, GeekListRawResponse, GeekListResponse } from "./types/geeklist";
+import { SearchOptions, SearchRawResponse, SearchResponse } from "./types/search";
 
 const MAX_ATTEMPTS = 10;
 
@@ -114,11 +121,32 @@ export const bgg = <C extends Command>(
   return getWithTimeout(c, resParams, transformerDict[c], useCache);
 };
 
-class BGG {
-  private pause = (seconds: number) => {
-    return new Promise((res) => setTimeout(res, seconds * 1000));
-  };
+const generateURI = (
+  base: string,
+  route: string,
+  options?: { [key: string]: boolean | string | number }
+) => {
+  const params = [];
+  if (options) {
+    for (const [k, v] of Object.entries(options)) {
+      if (typeof v === "string") {
+        params.push(`${k}=${encodeURI(v)}`);
+      } else if (typeof v === "boolean") {
+        params.push(`${k}=${v ? 1 : 0}`);
+      } else {
+        params.push(`${k}=${v}`);
+      }
+    }
+  }
+  const paramString = params.length ? `?${params.join("&")}` : "";
+  return base + route + paramString;
+};
 
+const pause = (seconds: number) => {
+  return new Promise((res) => setTimeout(res, seconds * 1000));
+};
+
+class BGG {
   private fetchFromBgg = async <T, U>(
     uri: string,
     n: number,
@@ -133,11 +161,11 @@ class BGG {
         break;
       } else if (data.status === 202) {
         console.log("202");
-        await this.pause(n);
+        await pause(n);
         n = 3;
       } else if (data.status === 429) {
         console.log("429");
-        await this.pause(10);
+        await pause(10);
       }
     }
 
@@ -150,37 +178,35 @@ class BGG {
     return t(xml);
   };
 
-  private generateURI(
-    base: string,
-    id: string,
-    options?: { [key: string]: boolean | string | number }
-  ) {
-    const params = [];
-    if (options) {
-      for (const [k, v] of Object.entries(options)) {
-        params.push(`${k}=${typeof v === "boolean" ? (v ? 1 : 0) : v}`);
-      }
-    }
-    const paramString = params.length ? `?${params.join("&")}` : "";
-    return base + id + paramString;
-  }
-
   thing() {}
 
-  user() {}
+  user(
+    name: string,
+    options?: {
+      buddies?: boolean;
+      guilds?: boolean;
+      hot?: boolean;
+      top?: boolean;
+      page?: number;
+    }
+  ) {}
 
   plays() {}
 
   collection() {}
 
-  hot() {}
+  hot() {
+    const uri = generateURI(XMLAPI2, "hot", { type: "boardgame" });
+    console.log(uri);
+    return this.fetchFromBgg<HotRawResponse, HotResponse>(
+      uri,
+      1,
+      hotTransformer
+    );
+  }
 
   geeklist(id: string, options?: GeekListOptions) {
-    const uri = this.generateURI(
-      "https://boardgamegeek.com/xmlapi/geeklist/",
-      id,
-      options
-    );
+    const uri = generateURI(XMLAPI, `geeklist/${id}`, options);
     return this.fetchFromBgg<GeekListRawResponse, GeekListResponse>(
       uri,
       3,
@@ -188,9 +214,15 @@ class BGG {
     );
   }
 
-  search() {}
+  search(query: string, options?: SearchOptions) {
+    const uri = generateURI(XMLAPI2, "search", { query, ...options });
+    return this.fetchFromBgg<SearchRawResponse, SearchResponse>(
+      uri,
+      5,
+      searchTransformer
+    );
+  }
 }
 
-const { geeklist } = new BGG();
+const beeg = new BGG();
 
-geeklist("330499", { comments: true });

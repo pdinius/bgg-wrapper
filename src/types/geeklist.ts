@@ -1,6 +1,4 @@
-// GEEKLIST
-
-export type RawGeekListComment = {
+export type GeekListRawComment = {
   $: {
     username: string;
     date: string;
@@ -26,7 +24,7 @@ export type GeekListRawResponse = {
     username: string;
     title: string;
     description: string;
-    comment?: Array<RawGeekListComment>;
+    comment?: Array<GeekListRawComment>;
     item: Array<{
       $: {
         id: number;
@@ -39,7 +37,7 @@ export type GeekListRawResponse = {
         imageid: number;
       };
       body: string;
-      comment?: Array<RawGeekListComment>;
+      comment?: Array<GeekListRawComment>;
     }>;
   };
 };
