@@ -41,3 +41,5 @@ export const findFirst = <T, S>(
   }
   return null;
 };
+
+export type OrArray<T> = Array<T> | T;

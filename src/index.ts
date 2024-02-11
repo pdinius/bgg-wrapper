@@ -1,125 +1,27 @@
-import { Command, CommandParams } from "./types/types";
-import {
-  transformRawCollectionToCollection,
-  transformRawPlaysToPlays,
-  transformRawSearchToSearch,
-  transformRawThingToThing,
-} from "./transformers";
 import { parse } from "browser-xml";
-import { timeout } from "./utils";
-import moment from "moment";
-import {
-  geeklistTransformer,
-  hotTransformer,
-  searchTransformer,
-} from "./transformers2";
 import { XMLAPI, XMLAPI2 } from "./constants";
+import {
+  GeekListOptions,
+  GeekListRawResponse,
+  GeekListResponse,
+} from "./types/geeklist";
+import {
+  SearchOptions,
+  SearchRawResponse,
+  SearchResponse,
+} from "./types/search";
 import { HotRawResponse, HotResponse } from "./types/hot";
-import { GeekListOptions, GeekListRawResponse, GeekListResponse } from "./types/geeklist";
-import { SearchOptions, SearchRawResponse, SearchResponse } from "./types/search";
-
-const MAX_ATTEMPTS = 10;
-
-type TransformerFunction<K extends Command> = (
-  arg: CommandParams[K]["raw_response"]
-) => CommandParams[K]["transformed_response"];
-
-const baseUrl = "https://boardgamegeek.com/xmlapi2/";
-const transformerDict: {
-  [key in Command]: TransformerFunction<key>;
-} = {
-  collection: transformRawCollectionToCollection,
-  thing: transformRawThingToThing,
-  plays: transformRawPlaysToPlays,
-  search: transformRawSearchToSearch,
-};
-
-const execute = async <T>(
-  url: string,
-  attempts = MAX_ATTEMPTS,
-  attempt = 1
-): Promise<T> => {
-  if (attempts === 0) {
-    throw Error("Ran out of attempts.");
-  }
-  try {
-    console.log(`Attempt #${attempt}. ${attempts} attempts remaining.`);
-    const response = await fetch(url);
-
-    if (response.status === 202) {
-      await timeout(5, "seconds");
-      return execute(url, --attempts, ++attempt);
-    }
-    if (response.status >= 400) {
-      throw Error(await response.text());
-    }
-
-    const data = await response.text();
-
-    return parse<T>(data);
-  } catch (e) {
-    if (e instanceof Error) {
-      console.error(e.message);
-      console.log("Backing off for 15 seconds.");
-      await timeout(15, "seconds");
-      return execute(url, --attempts, ++attempt);
-    } else {
-      // should never get here
-      throw Error("Failed to fetch from bgg.");
-    }
-  }
-};
-
-const getWithTimeout = async <C extends Command>(
-  command: C,
-  params: { [key: string]: string | number },
-  transformer: TransformerFunction<C>,
-  useCache: boolean
-) => {
-  // concatenate the url
-  const paramsString = Object.entries(params)
-    .map(([key, val]) => `${key}=${val}`)
-    .join("&");
-  let url = baseUrl + command;
-  if (paramsString.length) url += `?${paramsString}`;
-
-  let cacheItem: string | null = "";
-  if (useCache && typeof window !== "undefined") {
-    cacheItem = localStorage.getItem(url);
-  }
-
-  if (cacheItem) {
-    return JSON.parse(cacheItem);
-  } else {
-    const res = transformer(
-      await execute<CommandParams[C]["raw_response"]>(url)
-    );
-    if (typeof window !== "undefined")
-      localStorage.setItem(url, JSON.stringify(res));
-    return res;
-  }
-};
-
-export const bgg = <C extends Command>(
-  c: C,
-  params: CommandParams[C]["params"],
-  useCache = true
-): Promise<CommandParams[C]["transformed_response"]> => {
-  const resParams: { [key: string]: string | number } = {};
-
-  for (const p in params) {
-    const el = params[p];
-    if (typeof el === "boolean") {
-      resParams[p] = el ? "1" : "0";
-    } else if (el instanceof Date) {
-      resParams[p] = moment(el).format("YY-MM-DD%20HH:mm:ss");
-    } else {
-      resParams[p] = el as string | number;
-    }
-  }
-
-  return getWithTimeout(c, resParams, transformerDict[c], useCache);
-};
+import {
+  BuddiesOptions,
+  GuildsOptions,
+  UserOptions,
+  UserRawResponse,
+  UserResponse,
+} from "./types/user";
+import { userTransformer } from "./transformers/user";
+import { hotTransformer } from "./transformers/hot";
+import { geeklistTransformer } from "./transformers/geeklist";
+import { searchTransformer } from "./transformers/search";
 
 const generateURI = (
   base: string,
@@ -146,8 +48,21 @@ const pause = (seconds: number) => {
   return new Promise((res) => setTimeout(res, seconds * 1000));
 };
 
+const clean = <T extends Object>(o: T) => {
+  if (typeof o !== "object") return o;
+
+  for (const [k, v] of Object.entries(o)) {
+    const key = k as keyof typeof o;
+    if (v === undefined) {
+      delete o[key];
+    }
+  }
+
+  return o as T;
+};
+
 class BGG {
-  private fetchFromBgg = async <T, U>(
+  private fetchFromBgg = async <T, U extends Object>(
     uri: string,
     n: number,
     t: (xml: T) => U
@@ -175,21 +90,33 @@ class BGG {
 
     const text = await data.text();
     const xml = parse<T>(text);
-    return t(xml);
+    return clean<U>(t(xml));
   };
 
   thing() {}
 
-  user(
-    name: string,
-    options?: {
-      buddies?: boolean;
-      guilds?: boolean;
-      hot?: boolean;
-      top?: boolean;
-      page?: number;
+  async user(name: string, options?: UserOptions) {
+    const uri = generateURI(XMLAPI2, "user", { name, ...options });
+    const res = await this.fetchFromBgg<UserRawResponse, UserResponse>(
+      uri,
+      0,
+      userTransformer
+    );
+    if (!options?.buddies) {
+      delete res.buddies;
     }
-  ) {}
+    if (!options?.guilds) {
+      delete res.guilds;
+    }
+    if (!options?.hot) {
+      delete res.hot;
+    }
+    return res;
+  }
+
+  buddies(name: string, options?: BuddiesOptions) {}
+
+  guilds(name: string, options?: GuildsOptions) {}
 
   plays() {}
 
@@ -197,7 +124,6 @@ class BGG {
 
   hot() {
     const uri = generateURI(XMLAPI2, "hot", { type: "boardgame" });
-    console.log(uri);
     return this.fetchFromBgg<HotRawResponse, HotResponse>(
       uri,
       1,
@@ -225,4 +151,9 @@ class BGG {
 }
 
 const beeg = new BGG();
+const log = (o: any) => {
+  console.log(JSON.stringify(o, null, 2));
+};
+
+beeg.user("phildinius", { hot: true }).then(log);
 
