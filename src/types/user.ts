@@ -1,4 +1,4 @@
-import { OrArray } from "../utils";
+import { OrArray } from "../helpers";
 import { ThingType } from "./general";
 
 export type UserOptions = {

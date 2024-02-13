@@ -39,3 +39,5 @@ export const clean = <T extends Object>(o: T) => {
 
   return o as T;
 };
+
+export type OrArray<T> = Array<T> | T;
