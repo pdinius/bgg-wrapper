@@ -11,55 +11,14 @@ import {
   SearchResponse,
 } from "./types/search";
 import { HotRawResponse, HotResponse } from "./types/hot";
-import {
-  BuddiesOptions,
-  GuildsOptions,
-  UserOptions,
-  UserRawResponse,
-  UserResponse,
-} from "./types/user";
+import { UserOptions, UserRawResponse, UserResponse } from "./types/user";
 import { userTransformer } from "./transformers/user";
 import { hotTransformer } from "./transformers/hot";
 import { geeklistTransformer } from "./transformers/geeklist";
 import { searchTransformer } from "./transformers/search";
-
-const generateURI = (
-  base: string,
-  route: string,
-  options?: { [key: string]: boolean | string | number }
-) => {
-  const params = [];
-  if (options) {
-    for (const [k, v] of Object.entries(options)) {
-      if (typeof v === "string") {
-        params.push(`${k}=${encodeURI(v)}`);
-      } else if (typeof v === "boolean") {
-        params.push(`${k}=${v ? 1 : 0}`);
-      } else {
-        params.push(`${k}=${v}`);
-      }
-    }
-  }
-  const paramString = params.length ? `?${params.join("&")}` : "";
-  return base + route + paramString;
-};
-
-const pause = (seconds: number) => {
-  return new Promise((res) => setTimeout(res, seconds * 1000));
-};
-
-const clean = <T extends Object>(o: T) => {
-  if (typeof o !== "object") return o;
-
-  for (const [k, v] of Object.entries(o)) {
-    const key = k as keyof typeof o;
-    if (v === undefined) {
-      delete o[key];
-    }
-  }
-
-  return o as T;
-};
+import { clean, generateURI, log, pause } from "./helpers";
+import { ThingOptions } from "./types/thing";
+import { thingTransformer } from "./transformers/thing";
 
 class BGG {
   private fetchFromBgg = async <T, U extends Object>(
@@ -93,7 +52,24 @@ class BGG {
     return clean<U>(t(xml));
   };
 
-  thing() {}
+  thing(id: string | Array<string>, options?: ThingOptions) {
+    if (options) {
+      if (
+        options?.pagesize < 10 ||
+        options?.pagesize > 100 ||
+        options?.pagesize % 1
+      ) {
+        throw Error(
+          "pagesize option must be an integer between 10 and 100 inclusive."
+        );
+      }
+    }
+    const uri = generateURI(XMLAPI2, "thing", {
+      id: Array.isArray(id) ? id.join(",") : id,
+      ...options,
+    });
+    this.fetchFromBgg(uri, 0, thingTransformer);
+  }
 
   async user(name: string, options?: UserOptions) {
     const uri = generateURI(XMLAPI2, "user", { name, ...options });
@@ -113,10 +89,6 @@ class BGG {
     }
     return res;
   }
-
-  buddies(name: string, options?: BuddiesOptions) {}
-
-  guilds(name: string, options?: GuildsOptions) {}
 
   plays() {}
 
@@ -151,9 +123,5 @@ class BGG {
 }
 
 const beeg = new BGG();
-const log = (o: any) => {
-  console.log(JSON.stringify(o, null, 2));
-};
 
-beeg.user("phildinius", { hot: true }).then(log);
-
+beeg.thing(["361545"]);
