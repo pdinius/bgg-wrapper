@@ -13,10 +13,10 @@ const playerCountPollTransformer = (
 ): SuggestedPlayerCountPollResult => {
   return {
     playerCount: raw.$.numplayers,
-    bestVotes: raw.result.find((v) => v.value === "Best")?.numvotes || 0,
-    recommendedVotes:
+    best: raw.result.find((v) => v.value === "Best")?.numvotes || 0,
+    recommended:
       raw.result.find((v) => v.value === "Recommended")?.numvotes || 0,
-    notRecommendedVotes:
+    notRecommended:
       raw.result.find((v) => v.value === "Not Recommended")?.numvotes || 0,
   };
 };

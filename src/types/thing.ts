@@ -62,25 +62,7 @@ export type ThingRaw = Partial<{
           title: "User Suggested Number of Players";
           totalvotes: number;
         };
-        results: OrArray<{
-          $: {
-            numplayers: number;
-          };
-          result: [
-            {
-              value: "Best";
-              numvotes: number;
-            },
-            {
-              value: "Recommended";
-              numvotes: number;
-            },
-            {
-              value: "Not Recommended";
-              numvotes: number;
-            }
-          ];
-        }>;
+        results: OrArray<PlayerCountPollRawResult>;
       }
     | {
         $: {
@@ -168,9 +150,9 @@ type Link = {
 
 export type SuggestedPlayerCountPollResult = {
   playerCount: number;
-  bestVotes: number;
-  recommendedVotes: number;
-  notRecommendedVotes: number;
+  best: number;
+  recommended: number;
+  notRecommended: number;
 };
 
 export type Thing = {
