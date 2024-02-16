@@ -52,12 +52,13 @@ class BGG {
     return clean<U>(t(xml));
   };
 
-  thing(id: string | Array<string>, options?: ThingOptions) {
+  thing<T extends ThingOptions>(id: string | Array<string>, options?: T) {
     if (options) {
       if (
-        options?.pagesize < 10 ||
-        options?.pagesize > 100 ||
-        options?.pagesize % 1
+        options?.pagesize &&
+        (options.pagesize < 10 ||
+          options.pagesize > 100 ||
+          options.pagesize % 1)
       ) {
         throw Error(
           "pagesize option must be an integer between 10 and 100 inclusive."
@@ -68,7 +69,7 @@ class BGG {
       id: Array.isArray(id) ? id.join(",") : id,
       ...options,
     });
-    this.fetchFromBgg(uri, 0, thingTransformer);
+    return this.fetchFromBgg(uri, 0, thingTransformer);
   }
 
   async user(name: string, options?: UserOptions) {
@@ -124,4 +125,4 @@ class BGG {
 
 const beeg = new BGG();
 
-beeg.thing(["361545"]);
+beeg.thing(["233078"], { "comments": true });

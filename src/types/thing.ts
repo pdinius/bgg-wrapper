@@ -1,7 +1,9 @@
 import { OrArray } from "../helpers";
 import { LinkType, NameType, ThingType } from "./general";
 
-export type ThingOptions = {
+// ----- OPTIONS
+
+export type ThingOptions = Partial<{
   type: ThingType;
   versions: boolean;
   videos: boolean;
@@ -11,9 +13,11 @@ export type ThingOptions = {
   ratingcomments: boolean;
   page: number;
   pagesize: number;
-};
+}>;
 
-export type PlayerCountPollRawResult = {
+// ----- RAW
+
+export type PlayerCountPollResultRaw = {
   $: {
     numplayers: number;
   };
@@ -33,6 +37,68 @@ export type PlayerCountPollRawResult = {
   ];
 };
 
+export type PlayerCountPollRaw = {
+  $: {
+    name: "suggested_numplayers";
+    title: "User Suggested Number of Players";
+    totalvotes: number;
+  };
+  results: OrArray<PlayerCountPollResultRaw>;
+};
+
+export type SuggestedPlayerAgePollResultRaw = {
+  value: number | string;
+  numvotes: number;
+};
+
+export type SuggestedPlayerAgePollRaw = {
+  $: {
+    name: "suggested_playerage";
+    title: "User Suggested Player Age";
+    totalvotes: number;
+  };
+  results: {
+    result: OrArray<SuggestedPlayerAgePollResultRaw>;
+  };
+};
+
+export const LANGUAGE_DEPENDENCE_LABELS = [
+  "No necessary in-game text",
+  "Some necessary text - easily memorized or small crib sheet",
+  "Moderate in-game text - needs crib sheet or paste ups",
+  "Extensive use of text - massive conversion needed to be playable",
+  "Unplayable in another language",
+] as const;
+
+export type LanguageDependencePollResultRaw = {
+  level: number;
+  value: (typeof LANGUAGE_DEPENDENCE_LABELS)[number];
+  numvotes: number;
+};
+
+export type LanguageDependencePollRaw = {
+  $: {
+    name: "language_dependence";
+    title: "Language Dependence";
+    totalvotes: number;
+  };
+  results: {
+    result: Array<LanguageDependencePollResultRaw>;
+  };
+};
+
+export type LinkRaw = {
+  type: LinkType;
+  id: number;
+  value: string;
+};
+
+export type CommentRaw = {
+  username: string;
+  rating: number;
+  value: string;
+};
+
 export type ThingRaw = Partial<{
   $: {
     type: ThingType;
@@ -50,69 +116,13 @@ export type ThingRaw = Partial<{
     value: string;
   };
   minplayers: {
-    value: string;
+    value: number;
   };
   maxplayers: {
-    value: string;
+    value: number;
   };
   poll: Array<
-    | {
-        $: {
-          name: "suggested_numplayers";
-          title: "User Suggested Number of Players";
-          totalvotes: number;
-        };
-        results: OrArray<PlayerCountPollRawResult>;
-      }
-    | {
-        $: {
-          name: "suggested_playerage";
-          title: "User Suggested Player Age";
-          totalvotes: number;
-        };
-        results: {
-          result: OrArray<{
-            value: number;
-            numvotes: number;
-          }>;
-        };
-      }
-    | {
-        $: {
-          name: "language_dependence";
-          title: "Language Dependence";
-          totalvotes: number;
-        };
-        results: {
-          result: [
-            {
-              level: 1;
-              value: "No necessary in-game text";
-              numvotes: number;
-            },
-            {
-              level: 2;
-              value: "Some necessary text - easily memorized or small crib sheet";
-              numvotes: number;
-            },
-            {
-              level: 3;
-              value: "Moderate in-game text - needs crib sheet or paste ups";
-              numvotes: number;
-            },
-            {
-              level: 4;
-              value: "Extensive use of text - massive conversion needed to be playable";
-              numvotes: number;
-            },
-            {
-              level: 5;
-              value: "Unplayable in another language";
-              numvotes: number;
-            }
-          ];
-        };
-      }
+    PlayerCountPollRaw | SuggestedPlayerAgePollRaw | LanguageDependencePollRaw
   >;
   playingtime: {
     value: number;
@@ -126,11 +136,67 @@ export type ThingRaw = Partial<{
   minage: {
     value: number;
   };
-  link: OrArray<{
-    type: LinkType;
-    id: number;
-    value: string;
-  }>;
+  link: OrArray<LinkRaw>;
+  statistics: {
+    $: {
+      page: number;
+    };
+    ratings: {
+      usersrated: {
+        value: number;
+      };
+      average: {
+        value: number;
+      };
+      bayesaverage: {
+        value: number;
+      };
+      ranks: {
+        rank: Array<{
+          type: string;
+          id: number;
+          name: string;
+          friendlyname: string;
+          value: number;
+          bayesaverage: number;
+        }>;
+      };
+      stddev: {
+        value: number;
+      };
+      median: {
+        value: number;
+      };
+      owned: {
+        value: number;
+      };
+      trading: {
+        value: number;
+      };
+      wanting: {
+        value: number;
+      };
+      wishing: {
+        value: number;
+      };
+      numcomments: {
+        value: number;
+      };
+      numweights: {
+        value: number;
+      };
+      averageweight: {
+        value: number;
+      };
+    };
+    comments?: {
+      $: {
+        page: number;
+        totalitems: number;
+      };
+      comment: Array<CommentRaw>;
+    };
+  };
 }>;
 
 export type ThingRawResponse = {
@@ -142,7 +208,9 @@ export type ThingRawResponse = {
   };
 };
 
-type Link = {
+// ----- RESULT
+
+export type Link = {
   type: LinkType;
   id: string;
   name: string;
@@ -155,14 +223,52 @@ export type SuggestedPlayerCountPollResult = {
   notRecommended: number;
 };
 
+export type SuggestedPlayerAgePollResult = {
+  age: number;
+  numVotes: number;
+};
+
+export type LanguageDependencePollResult = {
+  level: number;
+  label: string;
+  numVotes: number;
+};
+
+export type FamilyRank = {
+  id: String;
+  name: string;
+  label: string;
+  rank: number;
+  bayesAverage: number;
+};
+
+export type Stats = {
+  rank: number;
+  familyRanks: Array<FamilyRank>;
+  avgRating: number;
+  bayesAverage: number;
+  stdDev: number;
+  median: number;
+  weight: number;
+  users: {
+    rated: number;
+    owned: number;
+    forTrade: number;
+    wantInTrade: number;
+    wishlist: number;
+    commented: number;
+    weightVote: number;
+  };
+};
+
 export type Thing = {
   id: string;
   name: string;
   type: ThingType;
-  thumbnail: string;
-  image: string;
+  thumbnail?: string;
+  image?: string;
   alternateNames: Array<string>;
-  description: string;
+  description?: string;
   yearPublished: number;
   minPlayers: number;
   maxPlayers: number;
@@ -173,7 +279,6 @@ export type Thing = {
   recommendedPlayerCounts: Array<number>;
   bestPlayerCounts: Array<number>;
   suggestedPlayerAge: number;
-  weight: number;
   playerCountPoll: {
     label: string;
     totalVotes: number;
@@ -182,21 +287,16 @@ export type Thing = {
   suggestedPlayerAgePoll: {
     label: string;
     totalVotes: number;
-    results: Array<{
-      age: number;
-      votes: number;
-    }>;
+    results: Array<SuggestedPlayerAgePollResult>;
   };
   languageDependencePoll: {
     label: string;
     totalVotes: number;
-    results: Array<{
-      label: string;
-      level: number;
-      votes: number;
-    }>;
+    results: Array<LanguageDependencePollResult>;
   };
   links: Array<Link>;
+  page?: number;
+  stats?: Stats;
 };
 
 export type ThingResponse = {
