@@ -122,5 +122,3 @@ class BGG {
     );
   }
 }
-
-const beeg = new BGG();
