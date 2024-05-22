@@ -20,7 +20,7 @@ import { clean, generateURI, log, pause } from "./helpers";
 import { ThingOptions } from "./types/thing";
 import { thingTransformer } from "./transformers/thing";
 
-class BGG {
+export default class BGG {
   private fetchFromBgg = async <T, U extends Object>(
     uri: string,
     n: number,
