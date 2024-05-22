@@ -124,5 +124,3 @@ class BGG {
 }
 
 const beeg = new BGG();
-
-beeg.thing(["233078"], { "comments": true });
