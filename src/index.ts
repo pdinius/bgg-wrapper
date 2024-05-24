@@ -17,7 +17,7 @@ import { hotTransformer } from "./transformers/hot";
 import { geeklistTransformer } from "./transformers/geeklist";
 import { searchTransformer } from "./transformers/search";
 import { clean, generateURI, log, pause } from "./helpers";
-import { ThingOptions } from "./types/thing";
+import { ThingOptions, ThingResponse } from "./types/thing";
 import { thingTransformer } from "./transformers/thing";
 
 export default class BGG {
@@ -52,7 +52,12 @@ export default class BGG {
     return clean<U>(t(xml));
   };
 
-  thing<T extends ThingOptions>(id: string | Array<string>, options?: T) {
+  /**
+   * @param id ID number as a string for the item you'd like information for. This can be found in the url when viewing the item on boardgamegeek.com. You may also send an array of IDs.
+   * @param options Any optional parameters to filter the returned information.
+   * @returns A promise resolving to a JSON version of the item's data.
+   */
+  thing<T extends ThingOptions>(id: string | Array<string>, options?: T): Promise<ThingResponse> {
     if (options) {
       if (
         options?.pagesize &&
@@ -72,6 +77,11 @@ export default class BGG {
     return this.fetchFromBgg(uri, 0, thingTransformer);
   }
 
+  /**
+   * @param name The username you'd like information for.
+   * @param options Any optional parameters to filter the returned information.
+   * @returns A promise resolving to a JSON version of the user's data.
+   */
   async user(name: string, options?: UserOptions) {
     const uri = generateURI(XMLAPI2, "user", { name, ...options });
     const res = await this.fetchFromBgg<UserRawResponse, UserResponse>(
@@ -91,10 +101,17 @@ export default class BGG {
     return res;
   }
 
-  plays() {}
+  plays() {
+    // TODO: implement
+  }
 
-  collection() {}
+  collection() {
+    // TODO: implement
+  }
 
+  /**
+   * @returns A promise resolving to a JSON version of boardgamegeek's current hot games data.
+   */
   hot() {
     const uri = generateURI(XMLAPI2, "hot", { type: "boardgame" });
     return this.fetchFromBgg<HotRawResponse, HotResponse>(
@@ -104,6 +121,11 @@ export default class BGG {
     );
   }
 
+  /**
+   * @param id ID number as a string for the geeklist you'd like information for. This can be found in the url when viewing the geeklist on boardgamegeek.com.
+   * @param options Any optional parameters to filter the returned information.
+   * @returns A promise resolving to a JSON version of the geeklist's data.
+   */
   geeklist(id: string, options?: GeekListOptions) {
     const uri = generateURI(XMLAPI, `geeklist/${id}`, options);
     return this.fetchFromBgg<GeekListRawResponse, GeekListResponse>(
@@ -113,6 +135,11 @@ export default class BGG {
     );
   }
 
+  /**
+   * @param query A string query to search boardgamegeek.
+   * @param options Any optional parameters to filter the returned information.
+   * @returns A promise resolving to a JSON version of the search results.
+   */
   search(query: string, options?: SearchOptions) {
     const uri = generateURI(XMLAPI2, "search", { query, ...options });
     return this.fetchFromBgg<SearchRawResponse, SearchResponse>(
