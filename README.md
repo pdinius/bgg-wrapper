@@ -1,5 +1,5 @@
 # BGG Wrapper
-This is the repository for the npm package `bgg-wrapper`. The purpose of this package is to wrap [board game geek's api](https://boardgamegeek.com/wiki/page/BGG_XML_API2) so it's more usable to developers. The benefits of this wrapper:
+This is the repository for the npm package `bgg-wrapper`. The purpose of this package is to wrap [board game geek's api](https://boardgamegeek.com/wiki/page/BGG_XML_API2) in order to improve the developer experience. The benefits of this wrapper:
 
 - It converts the XML format to JSON for usability.
 - It handles retry logic for things like fetching collections when you have to make multiple calls.
