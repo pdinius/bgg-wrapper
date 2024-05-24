@@ -198,7 +198,6 @@ const singleThingTransformer = (raw: ThingRaw): Thing => {
 };
 
 export const thingTransformer = (raw: ThingRawResponse): ThingResponse => {
-  log(raw);
   const {
     items: { $, item },
   } = raw;
