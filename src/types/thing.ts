@@ -1,8 +1,8 @@
-import { OrArray } from "../helpers";
+import { LANGUAGE_DEPENDENCE_LABELS } from "../lib/constants";
+import { OrArray } from "../lib/utils";
 import { LinkType, NameType, ThingType } from "./general";
 
-// ----- OPTIONS
-
+//#region Options
 export type ThingOptions = Partial<{
   type: ThingType;
   versions: boolean;
@@ -12,11 +12,10 @@ export type ThingOptions = Partial<{
   comments: boolean;
   ratingcomments: boolean;
   page: number;
-  pagesize: number;
 }>;
+//#endregion
 
-// ----- RAW
-
+//#region Raw Data
 export type PlayerCountPollResultRaw = {
   $: {
     numplayers: number;
@@ -61,14 +60,6 @@ export type SuggestedPlayerAgePollRaw = {
     result: OrArray<SuggestedPlayerAgePollResultRaw>;
   };
 };
-
-export const LANGUAGE_DEPENDENCE_LABELS = [
-  "No necessary in-game text",
-  "Some necessary text - easily memorized or small crib sheet",
-  "Moderate in-game text - needs crib sheet or paste ups",
-  "Extensive use of text - massive conversion needed to be playable",
-  "Unplayable in another language",
-] as const;
 
 export type LanguageDependencePollResultRaw = {
   level: number;
@@ -152,7 +143,7 @@ export type ThingRaw = Partial<{
         value: number;
       };
       ranks: {
-        rank: Array<{
+        rank: OrArray<{
           type: string;
           id: number;
           name: string;
@@ -207,9 +198,9 @@ export type ThingRawResponse = {
     item: OrArray<ThingRaw>;
   };
 };
+//#endregion
 
-// ----- RESULT
-
+//#region Response
 export type Link = {
   type: LinkType;
   id: string;
@@ -295,7 +286,6 @@ export type Thing = {
     results: Array<LanguageDependencePollResult>;
   };
   links: Array<Link>;
-  page?: number;
   stats?: Stats;
 };
 
@@ -303,3 +293,4 @@ export type ThingResponse = {
   items: Array<Thing>;
   termsofuse: string;
 };
+//#endregion

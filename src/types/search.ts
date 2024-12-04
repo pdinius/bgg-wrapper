@@ -1,7 +1,8 @@
 import { NameType, ThingType } from "./general";
 
+//#region Options
 export type SearchOptions = {
-  type?: ThingType;
+  type?: ThingType | "boardgamedesigner";
   exact?: boolean;
 };
 

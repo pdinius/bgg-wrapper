@@ -1,3 +1,8 @@
+//#region Options
+export type GeekListOptions = { comments?: boolean };
+//#endregion
+
+//#region Raw Date
 export type GeekListRawComment = {
   $: {
     username: string;
@@ -41,10 +46,12 @@ export type GeekListRawResponse = {
     }>;
   };
 };
+//#endregion
 
+//#region Response
 export type GeekListComment = {
   postedBy: string;
-  postdate: Date;
+  postDate: Date;
   editDate: Date;
   thumbs: number;
   text: string;
@@ -53,10 +60,10 @@ export type GeekListComment = {
 export type GeekListItem = {
   id: string;
   name: string;
-  gameid: string;
+  gameId: string;
   imageId: string;
   postedBy: string;
-  postdate: Date;
+  postDate: Date;
   editDate: Date;
   thumbs: number;
   body: string;
@@ -65,10 +72,10 @@ export type GeekListItem = {
 
 export type GeekListResponse = {
   id: string;
-  postdate: Date;
-  postdateTimestamp: string;
-  editdate: Date;
-  editdateTimestamp: string;
+  postDate: Date;
+  postDateTimestamp: string;
+  editDate: Date;
+  editDateTimestamp: string;
   thumbs: number;
   numItems: number;
   postedBy: string;
@@ -76,7 +83,6 @@ export type GeekListResponse = {
   description: string;
   items: Array<GeekListItem>;
   comments?: Array<GeekListComment>;
-  termsofuse: string;
+  termsOfUse: string;
 };
-
-export type GeekListOptions = { comments: boolean };
+// #endregion

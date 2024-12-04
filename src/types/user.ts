@@ -1,6 +1,7 @@
-import { OrArray } from "../helpers";
+import { OrArray } from "../lib/utils";
 import { ThingType } from "./general";
 
+//#region Options
 export type UserOptions = {
   buddies?: boolean;
   guilds?: boolean;
@@ -16,7 +17,9 @@ export type BuddiesOptions = {
 export type GuildsOptions = {
   page: number;
 };
+//#endregion
 
+//#region Raw Data
 export type UserRawResponse = {
   user: {
     $: {
@@ -106,7 +109,9 @@ export type UserRawResponse = {
     };
   };
 };
+//#endregion
 
+//#region Response
 export type BuddyInfo = {
   id: string;
   name: string;
@@ -145,3 +150,4 @@ export type UserResponse = {
   hot?: Array<HotInfo>; 
   termsOfUse: string;
 };
+//#endregion

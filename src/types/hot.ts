@@ -31,5 +31,5 @@ export type HotItem = {
 
 export type HotResponse = {
   items: Array<HotItem>;
-  termsofuse: string;
+  termsOfUse: string;
 };

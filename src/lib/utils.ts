@@ -8,6 +8,7 @@ export const generateURI = (
   options?: { [key: string]: boolean | string | number }
 ) => {
   const params = [];
+
   if (options) {
     for (const [k, v] of Object.entries(options)) {
       if (typeof v === "string") {
@@ -19,6 +20,7 @@ export const generateURI = (
       }
     }
   }
+
   const paramString = params.length ? `?${params.join("&")}` : "";
   return base + route + paramString;
 };
@@ -41,3 +43,23 @@ export const clean = <T extends Object>(o: T) => {
 };
 
 export type OrArray<T> = Array<T> | T;
+
+export const dateToString = (d: Date) => {
+  const YY = d.getFullYear().toString().slice(2);
+  const MM = (d.getMonth() + 1).toString().padStart(2, "0");
+  const DD = d.getDate().toString().padStart(2, "0");
+  const HH = d.getHours().toString().padStart(2, "0");
+  const mm = d.getMinutes().toString().padStart(2, "0");
+  const SS = d.getSeconds().toString().padStart(2, "0");
+  return `${YY}-${MM}-${DD}%20${HH}:${mm}:${SS}`;
+};
+
+export const partition = <T>(arr: Array<T>, size: number) => {
+  const res: Array<Array<T>> = [];
+
+  for (let i = 0; i < arr.length; i += size) {
+    res.push(arr.slice(i, i + size));
+  }
+
+  return res;
+};

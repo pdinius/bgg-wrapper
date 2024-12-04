@@ -12,6 +12,6 @@ export const hotTransformer = (raw: HotRawResponse): HotResponse => {
           yearPublished: item.yearpublished?.value,
         };
       }) || [],
-    termsofuse: raw.items?.$?.termsofuse,
+    termsOfUse: raw.items?.$?.termsofuse,
   };
 };

@@ -1,6 +1,5 @@
-import { log } from "../helpers";
+import { LANGUAGE_DEPENDENCE_LABELS } from "../lib/constants";
 import {
-  LANGUAGE_DEPENDENCE_LABELS,
   LanguageDependencePollRaw,
   LanguageDependencePollResult,
   LanguageDependencePollResultRaw,
@@ -108,23 +107,29 @@ const singleThingTransformer = (raw: ThingRaw): Thing => {
   }
 
   let stats: Stats | undefined = undefined;
-  let page: number | undefined = undefined;
 
   if (raw.statistics) {
-    const { statistics: { $, ratings } } = raw;
+    const {
+      statistics: { ratings },
+    } = raw;
+    const rank = ratings?.ranks?.rank;
     stats = {
-      rank: ratings.ranks.rank.find((r) => r.id === 1)?.value || -1,
-      familyRanks: ratings.ranks.rank
-        .filter((r) => r.id > 1)
-        .map((r) => {
-          return {
-            id: String(r.id),
-            name: r.name,
-            label: r.friendlyname,
-            rank: r.value,
-            bayesAverage: r.bayesaverage,
-          };
-        }),
+      rank: Array.isArray(rank)
+        ? (rank.find((r) => r.id === 1)?.value || -1)
+        : rank.value,
+      familyRanks: Array.isArray(rank)
+        ? rank
+            .filter((r) => r.id > 1)
+            .map((r) => {
+              return {
+                id: String(r.id),
+                name: r.name,
+                label: r.friendlyname,
+                rank: r.value,
+                bayesAverage: r.bayesaverage,
+              };
+            })
+        : [],
       avgRating: ratings.average.value,
       bayesAverage: ratings.bayesaverage.value,
       stdDev: ratings.stddev.value,
@@ -137,8 +142,8 @@ const singleThingTransformer = (raw: ThingRaw): Thing => {
         wantInTrade: ratings.wanting.value,
         wishlist: ratings.wishing.value,
         commented: ratings.numcomments.value,
-        weightVote: ratings.numweights.value
-      }
+        weightVote: ratings.numweights.value,
+      },
     };
   }
 
@@ -193,7 +198,6 @@ const singleThingTransformer = (raw: ThingRaw): Thing => {
     },
     links,
     stats,
-    page,
   };
 };
 

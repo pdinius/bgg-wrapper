@@ -11,7 +11,7 @@ const geekListCommentTransformer = (
 ): GeekListComment => {
   return {
     postedBy: raw?.$?.username,
-    postdate: new Date(raw?.$?.username),
+    postDate: new Date(raw?.$?.username),
     editDate: new Date(raw?.$?.editdate),
     thumbs: raw?.$?.thumbs,
     text: raw?._v,
@@ -23,10 +23,10 @@ export const geeklistTransformer = (
 ): GeekListResponse => {
   const res: GeekListResponse = {
     id: String(raw.geeklist?.$?.id),
-    postdate: new Date(raw.geeklist?.postdate),
-    postdateTimestamp: raw.geeklist?.postdate_timestamp,
-    editdate: new Date(raw.geeklist?.editdate),
-    editdateTimestamp: raw.geeklist?.editdate_timestamp,
+    postDate: new Date(raw.geeklist?.postdate),
+    postDateTimestamp: raw.geeklist?.postdate_timestamp,
+    editDate: new Date(raw.geeklist?.editdate),
+    editDateTimestamp: raw.geeklist?.editdate_timestamp,
     thumbs: Number(raw.geeklist?.thumbs),
     numItems: Number(raw.geeklist?.numitems),
     postedBy: raw.geeklist?.username,
@@ -36,14 +36,14 @@ export const geeklistTransformer = (
       raw.geeklist?.item?.map((item) => {
         const res: GeekListItem = {
           id: String(item.$?.id),
-          gameid: String(item.$?.objectid),
+          gameId: String(item.$?.objectid),
           imageId: String(item.$?.imageid),
           name: item.$?.objectname,
           postedBy: item.$?.username,
-          postdate: new Date(item.$?.postdate),
+          postDate: new Date(item.$?.postdate),
           editDate: new Date(item.$?.editdate),
           thumbs: item.$?.thumbs,
-          body: item.body,
+          body: typeof item.body === "string" ? item.body : "",
         };
 
         if (item?.comment) {
@@ -56,7 +56,7 @@ export const geeklistTransformer = (
 
         return res;
       }) || [],
-    termsofuse: raw.geeklist?.$?.termsofuse,
+    termsOfUse: raw.geeklist?.$?.termsofuse,
   };
 
   if (raw.geeklist?.comment) {
