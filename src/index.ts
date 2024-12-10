@@ -9,8 +9,21 @@ import { geeklistTransformer } from "./transformers/geeklist";
 import { searchTransformer } from "./transformers/search";
 import { ThingOptions, ThingResponse } from "./types/thing";
 import { thingTransformer } from "./transformers/thing";
-import { CollectionOptions, CollectionOptionsClean } from "./types/collection";
-import { collectionTransformer } from "./transformers/collection";
+import {
+  CollectionItem,
+  CollectionItemWithStats,
+  CollectionOptions,
+  CollectionOptionsClean,
+  CollectionRawItem,
+  CollectionRawItemWithStats,
+  CollectionRawResponse,
+  CollectionResponse,
+} from "./types/collection";
+import {
+  collectionTransformer,
+  collectionTransformerWithStats,
+  expansionGamesToIds,
+} from "./transformers/collection";
 import {
   clean,
   dateToString,
@@ -75,7 +88,6 @@ export default class BGG {
       };
       let idx = 0;
       for (const p of parts) {
-        console.log(idx);
         if (idx++ > 0) await pause(0.5);
         const uri = generateURI(XMLAPI2, "thing", {
           id: p.join(","),
@@ -126,7 +138,23 @@ export default class BGG {
    * @param options Any optional parameters to filter the returned information.
    * @returns A promise resolving to a JSON version of the user's collection.
    */
-  collection(username: string, options: CollectionOptions = {}) {
+  collection(
+    username: string,
+    options: CollectionOptions & { stats: true }
+  ): Promise<CollectionResponse<CollectionItemWithStats>>;
+  collection(
+    username: string,
+    options?: CollectionOptions & { stats: false | undefined }
+  ): Promise<CollectionResponse<CollectionItem>>;
+  async collection(
+    username: string,
+    options?: CollectionOptions
+  ): Promise<
+    | CollectionResponse<CollectionItem>
+    | CollectionResponse<CollectionItemWithStats>
+  > {
+    options ||= {};
+
     if (Array.isArray(options.id)) {
       options.id = options.id.join(",");
     }
@@ -147,7 +175,32 @@ export default class BGG {
       username,
       ...(options as CollectionOptionsClean),
     });
-    return this.fetchFromBgg(uri, collectionTransformer, 15);
+    const expansionOptions = { ...options };
+    delete expansionOptions.excludesubtype;
+    delete expansionOptions.stats;
+    const expansionUri = generateURI(XMLAPI2, "collection", {
+      username,
+      ...({
+        ...expansionOptions,
+        subtype: "boardgameexpansion",
+      } as CollectionOptionsClean),
+    });
+
+    const expansionIds = await this.fetchFromBgg(
+      expansionUri,
+      expansionGamesToIds,
+      15
+    );
+
+    if (options.stats) {
+      return this.fetchFromBgg(uri, collectionTransformerWithStats(expansionIds), 15);
+    } else {
+      return this.fetchFromBgg(
+        uri,
+        collectionTransformer(expansionIds),
+        15
+      );
+    }
   }
 
   /**

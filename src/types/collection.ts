@@ -1,3 +1,4 @@
+import { OrArray } from "../lib/utils";
 import { ThingType } from "../types/general";
 
 //#region Options
@@ -33,10 +34,12 @@ export type CollectionOptions = Partial<{
   modifiedsince: Date | string;
 }>;
 
-export type CollectionOptionsClean = Partial<CollectionOptions & {
-  id: string;
-  modifiedsince: string;
-}>
+export type CollectionOptionsClean = Partial<
+  CollectionOptions & {
+    id: string;
+    modifiedsince: string;
+  }
+>;
 //#endregion
 
 //#region Raw Data
@@ -65,14 +68,47 @@ export interface CollectionRawItem {
   numplays: string;
 }
 
-export interface CollectionRawResponse {
+export interface RawRank {
+  type: string;
+  id: number;
+  name: string;
+  friendlyname: string;
+  value: number;
+  bayesaverage: number;
+};
+
+export interface CollectionRawItemWithStats extends CollectionRawItem {
+  stats: {
+    $: {
+      minplayers: number;
+      maxplayers: number;
+      minplaytime: number;
+      maxplaytime: number;
+      playingtime: number;
+      numowned: number;
+    };
+    rating: {
+      $: { value: number };
+      usersrated: { value: number };
+      average: { value: number };
+      bayesaverage: { value: number };
+      stddev: { value: number };
+      median: { value: number };
+      ranks: {
+        rank: OrArray<RawRank>;
+      };
+    };
+  };
+}
+
+export interface CollectionRawResponse<T> {
   items: {
     $: {
       totalitems: number;
       termsofuse: string;
       pubdate: string;
     };
-    item: Array<CollectionRawItem>;
+    item: Array<T>;
   };
 }
 //#endregion
@@ -99,10 +135,33 @@ export interface CollectionItem {
   numPlays: number;
 }
 
-export interface CollectionResponse {
+export interface Rank {
+  name: string;
+  formattedName: string;
+  rankingId: number;
+  rank: number;
+}
+
+export interface CollectionItemWithStats extends CollectionItem {
+  stats: {
+    minPlayers: number;
+    maxPlayers: number;
+    minPlaytime: number;
+    maxPlaytime: number;
+    numOwned: number;
+    collectionRating: number;
+    usersRated: number;
+    averageUserRating: number;
+    geekRating: number;
+    rank: number;
+    rankData: Array<Rank>;
+  };
+}
+
+export interface CollectionResponse<T> {
   totalItems: number;
   publishedDate: Date;
-  items: Array<CollectionItem>;
+  items: Array<T>;
   termsOfUse: string;
 }
 //#endregion
