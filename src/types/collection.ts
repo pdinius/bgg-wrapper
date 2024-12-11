@@ -88,7 +88,7 @@ export interface CollectionRawItemWithStats extends CollectionRawItem {
       numowned: number;
     };
     rating: {
-      $: { value: number };
+      $: { value: number | "N/A" };
       usersrated: { value: number };
       average: { value: number };
       bayesaverage: { value: number };

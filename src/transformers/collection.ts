@@ -59,7 +59,7 @@ const collectionItemWithStatsTransformer = (
       minPlaytime: stats.$.minplaytime,
       maxPlaytime: stats.$.maxplaytime,
       numOwned: stats.$.numowned,
-      collectionRating: stats.rating.$.value,
+      collectionRating: stats.rating.$.value === "N/A" ? -1 : stats.rating.$.value,
       usersRated: stats.rating.usersrated.value,
       averageUserRating: stats.rating.average.value,
       geekRating: stats.rating.bayesaverage.value,
