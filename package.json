@@ -12,9 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "browser-xml": "1.0.9"
-  },
-  "peerDependencies": {
+    "browser-xml": "1.0.9",
     "html-entities": "^2.5.2"
   }
 }
