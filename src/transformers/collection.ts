@@ -72,28 +72,6 @@ const collectionItemWithStatsTransformer = (
 export const collectionTransformer =
   (expansionIds: Array<string>) =>
   (
-    raw: CollectionRawResponse<CollectionRawItemWithStats>
-  ): CollectionResponse<CollectionItemWithStats> => {
-    const { items } = raw;
-
-    return {
-      totalItems: items?.$?.totalitems,
-      publishedDate: new Date(items?.$?.pubdate),
-      items: (
-        items?.item.map((item) => {
-          if (expansionIds.includes(item.$.objectid.toString())) {
-            item.$.subtype = "boardgameexpansion";
-          }
-          return item;
-        }) || []
-      ).map(collectionItemWithStatsTransformer),
-      termsOfUse: items?.$?.termsofuse,
-    };
-  };
-
-export const collectionTransformerWithStats =
-  (expansionIds: Array<string>) =>
-  (
     raw: CollectionRawResponse<CollectionRawItem>
   ): CollectionResponse<CollectionItem> => {
     const { items } = raw;
@@ -109,6 +87,30 @@ export const collectionTransformerWithStats =
           return item;
         }) || []
       ).map(collectionItemTransformer),
+      termsOfUse: items?.$?.termsofuse,
+    };
+  };
+
+export const collectionTransformerWithStats =
+  (expansionIds: Array<string>) =>
+  (
+    raw: CollectionRawResponse<CollectionRawItemWithStats>
+  ): CollectionResponse<CollectionItemWithStats> => {
+    const { items } = raw;
+
+    console.log("not stats");
+
+    return {
+      totalItems: items?.$?.totalitems,
+      publishedDate: new Date(items?.$?.pubdate),
+      items: (
+        items?.item.map((item) => {
+          if (expansionIds.includes(item.$.objectid.toString())) {
+            item.$.subtype = "boardgameexpansion";
+          }
+          return item;
+        }) || []
+      ).map(collectionItemWithStatsTransformer),
       termsOfUse: items?.$?.termsofuse,
     };
   };
