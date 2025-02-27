@@ -156,3 +156,43 @@ export interface LinkInformation {
   id: number;
   value: string;
 }
+
+export interface ItemInformation {
+  id: number;
+  name: string;
+  alternateNames: string[];
+  image: string;
+  thumbnail: string;
+  description: string;
+  yearPublished: number;
+  minPlayers: number;
+  maxPlayers: number;
+  playingTime: number;
+  minPlayTime: number;
+  maxPlayTime: number;
+  minAge: number;
+  bestWith: string;
+  recommendedWith: string;
+  suggestedNumPlayersPoll: {
+    [key: number]: SuggestedPlayerVotes;
+  };
+  suggestedPlayerAgePoll: {
+    [key: number]: number;
+  };
+  languageDependencePoll: LanguageDependenceVotes[];
+  categories: LinkInformation[];
+  mechanics: LinkInformation[];
+  families: LinkInformation[];
+  expansions: LinkInformation[];
+  accessories: LinkInformation[];
+  reimplements: LinkInformation[];
+  reimplementedBy: LinkInformation[];
+  designers: LinkInformation[];
+  artists: LinkInformation[];
+  publishers: LinkInformation[];
+}
+
+export interface ThingResponse {
+  termsOfUse: string;
+  items: ItemInformation[];
+}

@@ -1,5 +1,6 @@
 import { LinkType } from "../types/general";
 import {
+  ItemInformation,
   LanguageDependenceVotes,
   LinkInformation,
   RawItem,
@@ -9,6 +10,7 @@ import {
   RawSuggestedPlayersPollResult,
   RawThingResponse,
   SuggestedPlayerVotes,
+  ThingResponse,
 } from "../types/thing2";
 
 const suggestedPlayersReducer = (
@@ -63,7 +65,7 @@ const languageDependenceReducer = (
   ];
 };
 
-export const RawItemTransformer = (raw: RawItem) => {
+export const RawItemTransformer = (raw: RawItem): ItemInformation => {
   const {
     $,
     thumbnail,
@@ -87,9 +89,9 @@ export const RawItemTransformer = (raw: RawItem) => {
   } = raw;
 
   return {
-    id: $.id.toString(),
-    name: name.find((n) => n.type === "primary")?.value,
-    alternameNames: name
+    id: $.id,
+    name: name.find((n) => n.type === "primary")?.value || "",
+    alternateNames: name
       .filter((n) => n.type !== "primary")
       .map((n) => n.value),
     image,
@@ -102,19 +104,20 @@ export const RawItemTransformer = (raw: RawItem) => {
     minPlayTime: minplaytime.value,
     maxPlayTime: maxplaytime.value,
     minAge: minage.value,
-    bestWith: suggested_numplayers_results.result[0].value.replace(/ΓÇô/g, "-"),
+    bestWith: (suggested_numplayers_results.result[0].value.match(/\d\S+/) ||
+      "")[0].replace(/\D+/, "-"),
     recommendedWith: (suggested_numplayers_results.result[1].value.match(
       /\d\S+/
     ) || "")[0].replace(/\D+/, "-"),
-    suggestedNumPlayers: suggested_numplayers.results.reduce(
+    suggestedNumPlayersPoll: suggested_numplayers.results.reduce(
       suggestedPlayersReducer,
       {}
     ),
-    suggestedPlayerAge: suggested_playerage.results.result.reduce(
+    suggestedPlayerAgePoll: suggested_playerage.results.result.reduce(
       suggestedPlayerAgeReducer,
       {}
     ),
-    languageDependence: language_dependence.results.result.reduce(
+    languageDependencePoll: language_dependence.results.result.reduce(
       languageDependenceReducer,
       []
     ),

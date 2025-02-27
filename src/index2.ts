@@ -8,25 +8,24 @@ const memo: { [key: string]: any } = {};
 
 export default class BGG {
   private fetchFromBgg = async <T>(uri: string, attempts = 0): Promise<T> => {
-    // if (memo[uri] !== undefined) return memo[uri];
+    if (memo[uri] !== undefined) return memo[uri];
     const data = await fetch(uri, {
       headers: { "Content-Type": "text/html; charset=UTF-8" },
     });
+    if (attempts === 5 && data.status !== 200) {
+      throw Error(`Reached maximum attempts. Please try again momentarily.`);
+    }
 
     switch (data.status) {
       case 200:
         const text = await data.text();
         const json = parse(text);
-        // memo[uri] = json;
+        memo[uri] = json;
         return json as T;
       case 202:
         await pause(5);
         return await this.fetchFromBgg(uri, attempts + 1);
       case 429:
-        if (attempts === 5)
-          throw Error(
-            `Reached maximum attempts. Please try again momentarily.`
-          );
         await pause(10);
         return await this.fetchFromBgg(uri, attempts + 1);
       default:
@@ -44,4 +43,6 @@ export default class BGG {
 }
 
 const bgg = new BGG();
-bgg.thing(["128882", "1234"]).then(json => console.log(JSON.stringify(json, null, 2)));
+bgg
+  .thing(["128882", "1234"])
+  .then((json) => console.log(JSON.stringify(json, null, 2)));
