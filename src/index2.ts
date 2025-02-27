@@ -1,24 +1,24 @@
 import { parse } from "browser-xml";
 import { generateURI, pause } from "./lib/utils";
 import { XMLAPI, XMLAPI2 } from "./lib/constants";
-import { ThingOptions } from "./types/thing2";
+import { RawThingResponse, ThingOptions } from "./types/thing2";
+import { ThingTransformer } from "./transformers/thing2";
 
 const memo: { [key: string]: any } = {};
 
 export default class BGG {
-  private fetchFromBgg = async (
-    uri: string,
-    attempts = 0
-  ): Promise<unknown> => {
-    if (memo[uri] !== undefined) return memo[uri];
-    const data = await fetch(uri);
+  private fetchFromBgg = async <T>(uri: string, attempts = 0): Promise<T> => {
+    // if (memo[uri] !== undefined) return memo[uri];
+    const data = await fetch(uri, {
+      headers: { "Content-Type": "text/html; charset=UTF-8" },
+    });
 
     switch (data.status) {
       case 200:
-        const xml = await data.text();
-        const json = parse(xml);
-        memo[uri] = json;
-        return json;
+        const text = await data.text();
+        const json = parse(text);
+        // memo[uri] = json;
+        return json as T;
       case 202:
         await pause(5);
         return await this.fetchFromBgg(uri, attempts + 1);
@@ -36,12 +36,12 @@ export default class BGG {
 
   async thing(id: string | Array<string>, options?: ThingOptions) {
     if (Array.isArray(id)) {
-        id = id.join(",");
+      id = id.join(",");
     }
     const uri = generateURI(XMLAPI2, "thing", { id });
-    return this.fetchFromBgg(uri);
+    return this.fetchFromBgg<RawThingResponse>(uri).then(ThingTransformer);
   }
 }
 
 const bgg = new BGG();
-bgg.thing(["128882", "1234"]).then((data) => console.log(JSON.stringify(data, null, 2)));
+bgg.thing(["128882", "1234"]).then(json => console.log(JSON.stringify(json, null, 2)));
