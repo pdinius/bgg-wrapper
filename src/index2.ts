@@ -8,11 +8,12 @@ const memo: { [key: string]: any } = {};
 
 export default class BGG {
   private fetchFromBgg = async <T>(uri: string, attempts = 0): Promise<T> => {
-    if (memo[uri] !== undefined) return memo[uri];
+    // if (memo[uri] !== undefined) return memo[uri];
     const data = await fetch(uri, {
       headers: { "Content-Type": "text/html; charset=UTF-8" },
     });
-    if (attempts === 5 && data.status !== 200) {
+
+    if (attempts >= 5 && data.status !== 200) {
       throw Error(`Reached maximum attempts. Please try again momentarily.`);
     }
 
@@ -20,6 +21,7 @@ export default class BGG {
       case 200:
         const text = await data.text();
         const json = parse(text);
+        console.log(JSON.stringify(json, null, 2));
         memo[uri] = json;
         return json as T;
       case 202:
@@ -33,16 +35,27 @@ export default class BGG {
     }
   };
 
-  async thing(id: string | Array<string>, options?: ThingOptions) {
+  async thing(id: string | Array<string>, options?: Partial<ThingOptions>) {
     if (Array.isArray(id)) {
       id = id.join(",");
     }
-    const uri = generateURI(XMLAPI2, "thing", { id });
+
+    let ratingcomments = false;
+    if (options && "ratings" in options) {
+      ratingcomments = true;
+    }
+
+    const uri = generateURI(XMLAPI2, "thing", {
+      id,
+      ratingcomments,
+      ...options,
+    });
+
+    console.log(uri);
+
     return this.fetchFromBgg<RawThingResponse>(uri).then(ThingTransformer);
   }
 }
 
 const bgg = new BGG();
-bgg
-  .thing(["128882", "1234"])
-  .then((json) => console.log(JSON.stringify(json, null, 2)));
+bgg.thing("128882", { versions: true });

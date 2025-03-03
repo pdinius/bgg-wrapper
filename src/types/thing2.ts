@@ -5,6 +5,8 @@ import {
   ThingType,
 } from "./general";
 
+// Raw Response
+
 export interface ThingOptions {
   versions: boolean;
   videos: boolean;
@@ -57,6 +59,44 @@ export interface RawLanguageDependencePollResult {
   level: number;
   value: LanguageDependenceLevel;
   numvotes: number;
+}
+
+interface RawComment {
+  username: string;
+  rating: number | "N/A";
+  value: string;
+}
+
+export interface RawComments {
+  $: {
+    page: number;
+    totalitems: number;
+  };
+  comment: RawComment[];
+}
+
+export interface RawListing {
+  listdate: {
+    value: string;
+  };
+  price: {
+    currency: string;
+    value: number;
+  };
+  condition: {
+    value: string;
+  };
+  notes: {
+    value: string;
+  };
+  link: {
+    href: string;
+    title: string;
+  };
+}
+
+export interface RawMarketplaceInformation {
+  listing: RawListing[];
 }
 
 export interface RawItem {
@@ -130,6 +170,8 @@ export interface RawItem {
     value: number;
   };
   link: RawLink[];
+  comments?: RawComments;
+  marketplacelistings?: RawMarketplaceInformation;
 }
 
 export interface RawThingResponse {
@@ -140,6 +182,8 @@ export interface RawThingResponse {
     item: RawItem | RawItem[];
   };
 }
+
+// Returned Item
 
 export interface SuggestedPlayerVotes {
   best: number;
