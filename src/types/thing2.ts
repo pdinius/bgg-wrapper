@@ -5,7 +5,7 @@ import {
   ThingType,
 } from "./general";
 
-// Raw Response
+// Options
 
 export interface ThingOptions {
   versions: boolean;
@@ -16,6 +16,8 @@ export interface ThingOptions {
   ratings: boolean;
   page: number;
 }
+
+// Raw Response
 
 interface RawThingName {
   type: NameType;
@@ -99,6 +101,100 @@ export interface RawMarketplaceInformation {
   listing: RawListing[];
 }
 
+export interface RawVideoInformation {
+  id: number;
+  title: string;
+  category: string;
+  language: string;
+  link: string;
+  username: string;
+  userid: number;
+  postdate: string;
+}
+
+export interface RawVersion {
+  $: {
+    type: ThingType;
+    id: number;
+  };
+  thumbnail: string;
+  image: string;
+  link: RawLink[];
+  name: RawThingName;
+  yearpublished: {
+    value: number;
+  };
+  productcode: {
+    value?: string;
+  };
+  width: {
+    value: number;
+  };
+  length: {
+    value: number;
+  };
+  depth: {
+    value: number;
+  };
+  weight: {
+    value: number;
+  };
+}
+
+export interface RawStatistics {
+  $: {
+    page: number;
+  };
+  ratings: {
+    usersrated: {
+      value: number;
+    };
+    average: {
+      value: number;
+    };
+    bayesaverage: {
+      value: number;
+    };
+    ranks: {
+      rank: {
+        type: string;
+        id: number;
+        name: string;
+        friendlyname: string;
+        value: number;
+        bayesaverage: number;
+      }[];
+    };
+    stddev: {
+      value: number;
+    };
+    median: {
+      value: number;
+    };
+    owned: {
+      value: number;
+    };
+    trading: {
+      value: number;
+    };
+    wanting: {
+      value: number;
+    };
+    wishing: {
+      value: number;
+    };
+    numcomments: {
+      value: number;
+    };
+    numweights: {
+      value: number;
+    };
+    averageweight: {
+      value: number;
+    };
+  };
+}
+
 export interface RawItem {
   $: {
     type: ThingType;
@@ -128,16 +224,6 @@ export interface RawItem {
     },
     {
       $: {
-        name: "suggested_numplayers";
-        title: "User Suggested Number of Players";
-      };
-      result: {
-        name: "bestwith" | "recommmendedwith";
-        value: string;
-      }[];
-    },
-    {
-      $: {
         name: "suggested_playerage";
         title: "User Suggested Player Age";
         totalvotes: number;
@@ -157,6 +243,16 @@ export interface RawItem {
       };
     }
   ];
+  "poll-summary": {
+    $: {
+      name: "suggested_numplayers";
+      title: "User Suggested Number of Players";
+    };
+    result: {
+      name: "bestwith" | "recommmendedwith";
+      value: string;
+    }[];
+  };
   playingtime: {
     value: number;
   };
@@ -172,6 +268,16 @@ export interface RawItem {
   link: RawLink[];
   comments?: RawComments;
   marketplacelistings?: RawMarketplaceInformation;
+  versions?: {
+    item: RawVersion[];
+  };
+  videos?: {
+    $: {
+      total: number;
+    };
+    video: RawVideoInformation[];
+  };
+  statistics?: RawStatistics;
 }
 
 export interface RawThingResponse {
@@ -234,6 +340,24 @@ export interface ItemInformation {
   designers: LinkInformation[];
   artists: LinkInformation[];
   publishers: LinkInformation[];
+  statistics?: {
+    usersRated: number;
+    averageRating: number;
+    geekRating: number;
+    ranks: {
+      id: number;
+      category: string;
+      label: string;
+      rank: number;
+    }[];
+    owned: number;
+    trading: number;
+    wanting: number;
+    wishing: number;
+    numComments: number;
+    numWeights: number;
+    weight: number;
+  };
 }
 
 export interface ThingResponse {

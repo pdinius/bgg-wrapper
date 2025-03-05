@@ -48,11 +48,11 @@ export default class BGG {
       ...options,
     });
 
-    return this.fetchFromBgg<RawThingResponse>(uri); //.then(ThingTransformer);
+    return this.fetchFromBgg<RawThingResponse>(uri).then(ThingTransformer);
   }
 }
 
 const bgg = new BGG();
 bgg
-  .thing("128882", { versions: true })
+  .thing("128882", { stats: true })
   .then((json) => console.log(JSON.stringify(json, null, 2)));

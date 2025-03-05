@@ -60,7 +60,7 @@ export const xmlToJson = <T>(xml: string): T => {
 
       if (tag.endsWith("/>")) {
         // <example />
-        addToJson(res, tagName, { $: propsToJson(props) });
+        addToJson(res, tagName, propsToJson(props.slice(0,-2)));
       } else if (/^<[-\w+][^>]*>$/.test(tag)) {
         // <example>
         const closingIndex = getClosingIndex(tags.slice(i), tagName);
@@ -68,8 +68,6 @@ export const xmlToJson = <T>(xml: string): T => {
           throw Error(
             `Could not find closing tag for ${tagName} at depth ${depth}`
           );
-        }
-        if (tagName === "versions") {
         }
         addToJson(res, tagName, {
           $: propsToJson(props),
@@ -85,10 +83,18 @@ export const xmlToJson = <T>(xml: string): T => {
         if (content === null) {
           throw Error(`Could not find inner content: ${tag}`);
         }
-        addToJson(res, tagName, {
-          $: propsToJson(props),
-          _content: content[0],
-        });
+        const propsJson = propsToJson(props);
+        const value = stringToVal(content[0]);
+        if (propsJson && value) {
+          addToJson(res, tagName, {
+            $: propsJson,
+            _content: value,
+          });
+        } else if (propsJson) {
+          addToJson(res, tagName, propsJson);
+        } else if (value) {
+          addToJson(res, tagName, value);
+        }
       }
     }
 

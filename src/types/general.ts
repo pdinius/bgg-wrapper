@@ -1,7 +1,8 @@
 export type ThingType =
   | "boardgame"
   | "boardgameaccessory"
-  | "boardgameexpansion";
+  | "boardgameexpansion"
+  | "boardgameversion";
 export type NameType = "primary" | "alternate";
 export interface IError {
   status: number;

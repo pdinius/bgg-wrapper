@@ -10,6 +10,7 @@ import {
   RawSuggestedPlayersPollResult,
   RawThingResponse,
   SuggestedPlayerVotes,
+  ThingResponse,
 } from "../types/thing2";
 
 const suggestedPlayersReducer = (
@@ -65,6 +66,7 @@ const languageDependenceReducer = (
 };
 
 export const RawItemTransformer = (raw: RawItem): ItemInformation => {
+  console.log(raw.poll);
   const {
     $,
     thumbnail,
@@ -74,12 +76,8 @@ export const RawItemTransformer = (raw: RawItem): ItemInformation => {
     yearpublished,
     minplayers,
     maxplayers,
-    poll: [
-      suggested_numplayers,
-      suggested_numplayers_results,
-      suggested_playerage,
-      language_dependence,
-    ],
+    poll: [suggested_numplayers, suggested_playerage, language_dependence],
+    "poll-summary": suggested_numplayers_results,
     playingtime,
     minplaytime,
     maxplaytime,
@@ -87,7 +85,7 @@ export const RawItemTransformer = (raw: RawItem): ItemInformation => {
     link,
   } = raw;
 
-  return {
+  const res: ItemInformation = {
     id: $.id,
     name: name.find((n) => n.type === "primary")?.value || "",
     alternateNames: name
@@ -134,6 +132,47 @@ export const RawItemTransformer = (raw: RawItem): ItemInformation => {
     artists: link.reduce(linkReducer("boardgameartist"), []),
     publishers: link.reduce(linkReducer("boardgamepublisher"), []),
   };
+
+  if (raw.statistics !== undefined) {
+    const {
+      statistics: {
+        ratings: {
+          usersrated,
+          average,
+          bayesaverage,
+          ranks: { rank },
+          owned,
+          trading,
+          wanting,
+          wishing,
+          numcomments,
+          numweights,
+          averageweight,
+        },
+      },
+    } = raw;
+
+    res.statistics = {
+      usersRated: usersrated.value,
+      averageRating: average.value,
+      geekRating: bayesaverage.value,
+      ranks: rank.map((r) => ({
+        id: r.id,
+        category: r.name,
+        label: r.friendlyname,
+        rank: r.value,
+      })),
+      owned: owned.value,
+      trading: trading.value,
+      wanting: wanting.value,
+      wishing: wishing.value,
+      numComments: numcomments.value,
+      numWeights: numweights.value,
+      weight: averageweight.value,
+    };
+  }
+
+  return res;
 };
 
 export const ThingTransformer = (raw: RawThingResponse) => {
