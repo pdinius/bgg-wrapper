@@ -10,7 +10,6 @@ import {
   RawSuggestedPlayersPollResult,
   RawThingResponse,
   SuggestedPlayerVotes,
-  ThingResponse,
 } from "../types/thing2";
 
 const suggestedPlayersReducer = (
