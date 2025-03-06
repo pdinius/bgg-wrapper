@@ -9,8 +9,10 @@ import {
   RawSuggestedPlayerAgePollResult,
   RawSuggestedPlayersPollResult,
   RawThingResponse,
+  RawVersion,
   SuggestedPlayerVotes,
   ThingResponse,
+  Version,
 } from "../types/thing2";
 
 const suggestedPlayersReducer = (
@@ -65,8 +67,35 @@ const languageDependenceReducer = (
   ];
 };
 
+const versionMapper = (v: RawVersion) => {
+  const {
+    $: { id },
+    thumbnail,
+    image,
+    name: { value: name },
+    productcode: { value: productcode },
+    yearpublished: { value: yearpublished },
+    width: { value: width },
+    length: { value: length },
+    depth: { value: depth },
+    weight: { value: weight },
+  } = v;
+
+  return {
+    id,
+    name,
+    thumbnail,
+    image,
+    productCode: productcode,
+    yearPublished: yearpublished,
+    width,
+    length,
+    depth,
+    weight,
+  };
+};
+
 export const RawItemTransformer = (raw: RawItem): ItemInformation => {
-  console.log(raw.poll);
   const {
     $,
     thumbnail,
@@ -170,6 +199,11 @@ export const RawItemTransformer = (raw: RawItem): ItemInformation => {
       numWeights: numweights.value,
       weight: averageweight.value,
     };
+  }
+
+  if (raw.versions !== undefined) {
+    const { item } = raw.versions;
+    res.versions = item.map(versionMapper);
   }
 
   return res;

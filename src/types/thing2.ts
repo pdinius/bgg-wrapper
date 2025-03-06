@@ -8,9 +8,9 @@ import {
 // Options
 
 export interface ThingOptions {
+  stats: boolean;
   versions: boolean;
   videos: boolean;
-  stats: boolean;
   marketplace: boolean;
   comments: boolean;
   ratings: boolean;
@@ -307,6 +307,38 @@ export interface LinkInformation {
   value: string;
 }
 
+export interface Statistics {
+  usersRated: number;
+  averageRating: number;
+  geekRating: number;
+  ranks: {
+    id: number;
+    category: string;
+    label: string;
+    rank: number;
+  }[];
+  owned: number;
+  trading: number;
+  wanting: number;
+  wishing: number;
+  numComments: number;
+  numWeights: number;
+  weight: number;
+}
+
+export interface Version {
+  id: number;
+  thumbnail: string;
+  image: string;
+  name: string;
+  productCode?: string;
+  yearPublished: number;
+  width: number;
+  length: number;
+  depth: number;
+  weight: number;
+}
+
 export interface ItemInformation {
   id: number;
   name: string;
@@ -340,24 +372,8 @@ export interface ItemInformation {
   designers: LinkInformation[];
   artists: LinkInformation[];
   publishers: LinkInformation[];
-  statistics?: {
-    usersRated: number;
-    averageRating: number;
-    geekRating: number;
-    ranks: {
-      id: number;
-      category: string;
-      label: string;
-      rank: number;
-    }[];
-    owned: number;
-    trading: number;
-    wanting: number;
-    wishing: number;
-    numComments: number;
-    numWeights: number;
-    weight: number;
-  };
+  statistics?: Statistics;
+  versions?: Version[];
 }
 
 export interface ThingResponse {

@@ -6,7 +6,7 @@ const propsToJson = (s: string) => {
   const res: any = {};
 
   for (const p of props) {
-    const [key, val] = p.split("=");
+    const [key, val] = p.split(/=(?=")/);
     res[key] = stringToVal(val.slice(1, -1));
   }
 
@@ -52,7 +52,7 @@ export const xmlToJson = <T>(xml: string): T => {
 
     for (let i = 0; i < tags.length; ++i) {
       const tag = tags[i];
-      const regexMatch = tag.match(/<\/?([-_\w]+)\s*([^>]*)>/);
+      const regexMatch = tag.match(/<\/?([-_\w]+)\s*([^>]*?)\/?>/);
       if (regexMatch === null) {
         throw Error(`Unable to find tag name in "${tag}"`);
       }
