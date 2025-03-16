@@ -4,6 +4,7 @@ import { RankInformation, ThingInformation } from "./thing";
 
 export interface CollectionOptions {
   stats: boolean;
+  excludesubtype: "boardgameexpansion";
 }
 
 // Raw Response
@@ -129,9 +130,9 @@ export interface CollectionItemInformation {
 
 export interface MegaCollectionItemInformation
   extends Omit<CollectionItemInformation, "statistics">,
-  ThingInformation {
-    rating: number | null;
-  }
+    ThingInformation {
+  rating: number | null;
+}
 
 export interface CollectionResponse {
   termsOfUse: string;
