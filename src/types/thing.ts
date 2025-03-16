@@ -1,22 +1,38 @@
-import { LANGUAGE_DEPENDENCE_LABELS } from "../lib/constants";
-import { OrArray } from "../lib/utils";
-import { LinkType, NameType, ThingType } from "./general";
+import {
+  LanguageDependenceLevel,
+  LinkType,
+  NameType,
+  ThingType,
+} from "./general";
 
-//#region Options
-export type ThingOptions = Partial<{
-  type: ThingType;
+// Options
+
+export interface ThingOptions {
+  stats: boolean;
   versions: boolean;
   videos: boolean;
-  stats: boolean;
   marketplace: boolean;
   comments: boolean;
-  ratingcomments: boolean;
+  ratings: boolean;
   page: number;
-}>;
-//#endregion
+}
 
-//#region Raw Data
-export type PlayerCountPollResultRaw = {
+// Raw Response
+
+interface RawThingName {
+  type: NameType;
+  sortIndex: number;
+  value: string;
+}
+
+export interface RawLink {
+  type: LinkType;
+  id: number;
+  value: string;
+  inbound?: "true";
+}
+
+export interface RawSuggestedPlayersPollResult {
   $: {
     numplayers: number;
   };
@@ -34,77 +50,162 @@ export type PlayerCountPollResultRaw = {
       numvotes: number;
     }
   ];
-};
+}
 
-export type PlayerCountPollRaw = {
-  $: {
-    name: "suggested_numplayers";
-    title: "User Suggested Number of Players";
-    totalvotes: number;
-  };
-  results: OrArray<PlayerCountPollResultRaw>;
-};
-
-export type SuggestedPlayerAgePollResultRaw = {
-  value: number | string;
+export interface RawSuggestedPlayerAgePollResult {
+  value: number | "21 and up";
   numvotes: number;
-};
+}
 
-export type SuggestedPlayerAgePollRaw = {
-  $: {
-    name: "suggested_playerage";
-    title: "User Suggested Player Age";
-    totalvotes: number;
-  };
-  results: {
-    result: OrArray<SuggestedPlayerAgePollResultRaw>;
-  };
-};
-
-export type LanguageDependencePollResultRaw = {
+export interface RawLanguageDependencePollResult {
   level: number;
-  value: (typeof LANGUAGE_DEPENDENCE_LABELS)[number];
+  value: LanguageDependenceLevel;
   numvotes: number;
-};
+}
 
-export type LanguageDependencePollRaw = {
-  $: {
-    name: "language_dependence";
-    title: "Language Dependence";
-    totalvotes: number;
-  };
-  results: {
-    result: Array<LanguageDependencePollResultRaw>;
-  };
-};
-
-export type LinkRaw = {
-  type: LinkType;
-  id: number;
-  value: string;
-};
-
-export type CommentRaw = {
+interface RawComment {
   username: string;
-  rating: number;
+  rating: number | "N/A";
   value: string;
-};
+}
 
-export type ThingRaw = Partial<{
+export interface RawComments {
+  $: {
+    page: number;
+    totalitems: number;
+  };
+  comment: RawComment[];
+}
+
+export interface RawListing {
+  listdate: {
+    value: string;
+  };
+  price: {
+    currency: string;
+    value: number;
+  };
+  condition: {
+    value: string;
+  };
+  notes: {
+    value: string;
+  };
+  link: {
+    href: string;
+    title: string;
+  };
+}
+
+export interface RawMarketplaceInformation {
+  listing: RawListing[];
+}
+
+export interface RawVideoInformation {
+  id: number;
+  title: string;
+  category: string;
+  language: string;
+  link: string;
+  username: string;
+  userid: number;
+  postdate: string;
+}
+
+export interface RawVersion {
   $: {
     type: ThingType;
     id: number;
   };
   thumbnail: string;
   image: string;
-  name: OrArray<{
-    type: NameType;
-    sortindex: number;
-    value: string;
-  }>;
+  link: RawLink[];
+  name: RawThingName;
+  yearpublished: {
+    value: number;
+  };
+  productcode: {
+    value?: string;
+  };
+  width: {
+    value: number;
+  };
+  length: {
+    value: number;
+  };
+  depth: {
+    value: number;
+  };
+  weight: {
+    value: number;
+  };
+}
+
+export interface RawStatistics {
+  $: {
+    page: number;
+  };
+  ratings: {
+    usersrated: {
+      value: number;
+    };
+    average: {
+      value: number;
+    };
+    bayesaverage: {
+      value: number;
+    };
+    ranks: {
+      rank: {
+        type: string;
+        id: number;
+        name: string;
+        friendlyname: string;
+        value: number;
+        bayesaverage: number;
+      }[];
+    };
+    stddev: {
+      value: number;
+    };
+    median: {
+      value: number;
+    };
+    owned: {
+      value: number;
+    };
+    trading: {
+      value: number;
+    };
+    wanting: {
+      value: number;
+    };
+    wishing: {
+      value: number;
+    };
+    numcomments: {
+      value: number;
+    };
+    numweights: {
+      value: number;
+    };
+    averageweight: {
+      value: number;
+    };
+  };
+}
+
+export interface RawItem {
+  $: {
+    type: ThingType;
+    id: number;
+  };
+  thumbnail: string;
+  image: string;
+  name: RawThingName[];
   description: string;
   yearpublished: {
-    value: string;
+    value: number;
   };
   minplayers: {
     value: number;
@@ -112,9 +213,46 @@ export type ThingRaw = Partial<{
   maxplayers: {
     value: number;
   };
-  poll: Array<
-    PlayerCountPollRaw | SuggestedPlayerAgePollRaw | LanguageDependencePollRaw
-  >;
+  poll: [
+    {
+      $: {
+        name: "suggested_numplayers";
+        title: "User Suggested Number of Players";
+        totalvotes: number;
+      };
+      results: RawSuggestedPlayersPollResult[];
+    },
+    {
+      $: {
+        name: "suggested_playerage";
+        title: "User Suggested Player Age";
+        totalvotes: number;
+      };
+      results: {
+        result: RawSuggestedPlayerAgePollResult[];
+      };
+    },
+    {
+      $: {
+        name: "language_dependence";
+        title: "Language Dependence";
+        totalvotes: 66;
+      };
+      results: {
+        result: RawLanguageDependencePollResult[];
+      };
+    }
+  ];
+  "poll-summary": {
+    $: {
+      name: "suggested_numplayers";
+      title: "User Suggested Number of Players";
+    };
+    result: {
+      name: "bestwith" | "recommmendedwith";
+      value: string;
+    }[];
+  };
   playingtime: {
     value: number;
   };
@@ -127,170 +265,120 @@ export type ThingRaw = Partial<{
   minage: {
     value: number;
   };
-  link: OrArray<LinkRaw>;
-  statistics: {
-    $: {
-      page: number;
-    };
-    ratings: {
-      usersrated: {
-        value: number;
-      };
-      average: {
-        value: number;
-      };
-      bayesaverage: {
-        value: number;
-      };
-      ranks: {
-        rank: OrArray<{
-          type: string;
-          id: number;
-          name: string;
-          friendlyname: string;
-          value: number;
-          bayesaverage: number;
-        }>;
-      };
-      stddev: {
-        value: number;
-      };
-      median: {
-        value: number;
-      };
-      owned: {
-        value: number;
-      };
-      trading: {
-        value: number;
-      };
-      wanting: {
-        value: number;
-      };
-      wishing: {
-        value: number;
-      };
-      numcomments: {
-        value: number;
-      };
-      numweights: {
-        value: number;
-      };
-      averageweight: {
-        value: number;
-      };
-    };
-    comments?: {
-      $: {
-        page: number;
-        totalitems: number;
-      };
-      comment: Array<CommentRaw>;
-    };
+  link: RawLink[];
+  comments?: RawComments;
+  marketplacelistings?: RawMarketplaceInformation;
+  versions?: {
+    item: RawVersion[];
   };
-}>;
+  videos?: {
+    $: {
+      total: number;
+    };
+    video: RawVideoInformation[];
+  };
+  statistics?: RawStatistics;
+}
 
-export type ThingRawResponse = {
+export interface RawThingResponse {
   items: {
     $: {
       termsofuse: string;
     };
-    item: OrArray<ThingRaw>;
+    item: RawItem | RawItem[];
   };
-};
-//#endregion
+}
 
-//#region Response
-export type Link = {
-  type: LinkType;
-  id: string;
-  name: string;
-};
+// Returned Item
 
-export type SuggestedPlayerCountPollResult = {
-  playerCount: number;
+export interface SuggestedPlayerVotes {
   best: number;
   recommended: number;
   notRecommended: number;
-};
+}
 
-export type SuggestedPlayerAgePollResult = {
-  age: number;
-  numVotes: number;
-};
+export interface LanguageDependenceVotes {
+  votes: number;
+  value: string;
+}
 
-export type LanguageDependencePollResult = {
-  level: number;
-  label: string;
-  numVotes: number;
-};
+export interface LinkInformation {
+  id: number;
+  value: string;
+}
 
-export type FamilyRank = {
-  id: String;
-  name: string;
+export interface RankInformation {
+  id: number;
+  category: string;
   label: string;
   rank: number;
-  bayesAverage: number;
 };
 
-export type Stats = {
-  rank: number;
-  familyRanks: Array<FamilyRank>;
-  avgRating: number;
-  bayesAverage: number;
-  stdDev: number;
-  median: number;
+export interface Statistics {
+  usersRated: number;
+  averageRating: number;
+  geekRating: number;
+  ranks: RankInformation[];
+  owned: number;
+  trading: number;
+  wanting: number;
+  wishing: number;
+  numComments: number;
+  numWeights: number;
   weight: number;
-  users: {
-    rated: number;
-    owned: number;
-    forTrade: number;
-    wantInTrade: number;
-    wishlist: number;
-    commented: number;
-    weightVote: number;
-  };
-};
+}
 
-export type Thing = {
-  id: string;
+export interface Version {
+  id: number;
+  thumbnail: string;
+  image: string;
   name: string;
-  type: ThingType;
-  thumbnail?: string;
-  image?: string;
-  alternateNames: Array<string>;
-  description?: string;
+  productCode?: string;
+  yearPublished: number;
+  width: number;
+  length: number;
+  depth: number;
+  weight: number;
+}
+
+export interface ThingInformation {
+  id: number;
+  name: string;
+  alternateNames: string[];
+  image: string;
+  thumbnail: string;
+  description: string;
   yearPublished: number;
   minPlayers: number;
   maxPlayers: number;
-  playTime: number;
+  playingTime: number;
   minPlayTime: number;
   maxPlayTime: number;
   minAge: number;
-  recommendedPlayerCounts: Array<number>;
-  bestPlayerCounts: Array<number>;
-  suggestedPlayerAge: number;
-  playerCountPoll: {
-    label: string;
-    totalVotes: number;
-    results: Array<SuggestedPlayerCountPollResult>;
+  bestWith: string;
+  recommendedWith: string;
+  suggestedNumPlayersPoll: {
+    [key: number]: SuggestedPlayerVotes;
   };
   suggestedPlayerAgePoll: {
-    label: string;
-    totalVotes: number;
-    results: Array<SuggestedPlayerAgePollResult>;
+    [key: number]: number;
   };
-  languageDependencePoll: {
-    label: string;
-    totalVotes: number;
-    results: Array<LanguageDependencePollResult>;
-  };
-  links: Array<Link>;
-  stats?: Stats;
-};
+  languageDependencePoll: LanguageDependenceVotes[];
+  categories: LinkInformation[];
+  mechanics: LinkInformation[];
+  families: LinkInformation[];
+  expansions: LinkInformation[];
+  accessories: LinkInformation[];
+  reimplements: LinkInformation[];
+  reimplementedBy: LinkInformation[];
+  designers: LinkInformation[];
+  artists: LinkInformation[];
+  publishers: LinkInformation[];
+  statistics?: Statistics;
+  versions?: Version[];
+}
 
-export type ThingResponse = {
-  items: Array<Thing>;
-  termsofuse: string;
-};
-//#endregion
+export interface ThingResponse {
+  termsOfUse: string;
+  items: ThingInformation[];
+}

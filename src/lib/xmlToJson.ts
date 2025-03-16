@@ -1,3 +1,4 @@
+
 const stringToVal = (s: string) => (isNaN(Number(s)) ? s : Number(s));
 
 const propsToJson = (s: string) => {
@@ -39,7 +40,7 @@ const getClosingIndex = (tags: string[], tagName: string) => {
   return -1;
 };
 
-export const xmlToJson = <T>(xml: string): T => {
+const xmlToJson = <T>(xml: string): T => {
   const topLevel = xml
     .replace(/\s*\r?\n\s*/g, " ")
     .replace(/<\?xml[^>]+>/, "")
@@ -60,7 +61,7 @@ export const xmlToJson = <T>(xml: string): T => {
 
       if (tag.endsWith("/>")) {
         // <example />
-        addToJson(res, tagName, propsToJson(props.slice(0,-2)));
+        addToJson(res, tagName, propsToJson(props));
       } else if (/^<[-\w+][^>]*>$/.test(tag)) {
         // <example>
         const closingIndex = getClosingIndex(tags.slice(i), tagName);
@@ -103,3 +104,5 @@ export const xmlToJson = <T>(xml: string): T => {
 
   return subXml(topLevel);
 };
+
+export default xmlToJson;

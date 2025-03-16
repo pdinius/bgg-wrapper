@@ -24,3 +24,16 @@ export type LinkType =
   | "boardgamedesigner"
   | "boardgameartist"
   | "boardgamepublisher";
+
+export interface AlternateResult {
+  status: number;
+  message: string;
+}
+
+export type AlternateResponse =
+  | {
+      message: string;
+    }
+  | {
+      errors: { error: { message: string } };
+    };
