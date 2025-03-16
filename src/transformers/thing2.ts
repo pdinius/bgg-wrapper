@@ -206,6 +206,13 @@ export const RawItemTransformer = (raw: RawItem): ItemInformation => {
     res.versions = item.map(versionMapper);
   }
 
+  if (raw.videos !== undefined) {
+    const {
+      $: { total },
+      video
+    } = raw.videos;
+  }
+
   return res;
 };
 

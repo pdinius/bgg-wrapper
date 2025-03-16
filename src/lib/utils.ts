@@ -63,3 +63,7 @@ export const partition = <T>(arr: Array<T>, size: number) => {
 
   return res;
 };
+
+export const cleanString = (s: string) => {
+  return s.trim().replace(/\s+/g, " ");
+}

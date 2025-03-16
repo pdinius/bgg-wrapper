@@ -1,34 +1,48 @@
-import { generateURI, pause } from "./lib/utils";
+import { cleanString, generateURI, pause } from "./lib/utils";
 import { XMLAPI, XMLAPI2 } from "./lib/constants";
 import { RawThingResponse, ThingOptions } from "./types/thing2";
 import { ThingTransformer } from "./transformers/thing2";
 import { xmlToJson } from "./lib/xmlToJson";
 
 const memo: { [key: string]: any } = {};
+interface AlternateResult {
+  status: number;
+  message: string;
+}
+
+type AlternateResponse =
+  | {
+      message: string;
+    }
+  | {
+      errors: { error: { message: string } };
+    };
 
 export default class BGG {
-  private fetchFromBgg = async <T>(uri: string, attempts = 0): Promise<T> => {
-    // if (memo[uri] !== undefined) return memo[uri];
+  private fetchFromBgg = async <T extends object>(
+    uri: string
+  ): Promise<T | AlternateResult> => {
     const data = await fetch(uri);
+    const text = await data.text();
+    const json: T | AlternateResponse = xmlToJson(text);
 
-    if (attempts >= 5 && data.status !== 200) {
-      throw Error(`Reached maximum attempts. Please try again momentarily.`);
-    }
-
-    switch (data.status) {
-      case 200:
-        const text = await data.text();
-        const json = xmlToJson(text);
-        // memo[uri] = json;
-        return json as T;
-      case 202:
-        await pause(5);
-        return await this.fetchFromBgg(uri, attempts + 1);
-      case 429:
-        await pause(10);
-        return await this.fetchFromBgg(uri, attempts + 1);
-      default:
-        throw Error(`Unexpected status ${data.status} occurred.`);
+    if ("message" in json) {
+      return {
+        status: data.status,
+        message: cleanString(json.message),
+      };
+    } else if ("errors" in json) {
+      return {
+        status: data.status,
+        message: cleanString(json.errors.error.message),
+      };
+    } else if (data.status === 200) {
+      return json as T;
+    } else {
+      return {
+        status: data.status,
+        message: `Request failed with status ${data.status}.`,
+      };
     }
   };
 
@@ -48,11 +62,17 @@ export default class BGG {
       ...options,
     });
 
-    return this.fetchFromBgg<RawThingResponse>(uri)//.then(ThingTransformer);
+    return this.fetchFromBgg<RawThingResponse>(uri); //.then(ThingTransformer);
+  }
+
+  async collection(username: string) {
+    const uri = generateURI(XMLAPI2, "collection", {
+      username,
+    });
+
+    return this.fetchFromBgg<RawThingResponse>(uri); //.then(ThingTransformer);
   }
 }
 
 const bgg = new BGG();
-bgg
-  .thing("128882", { videos: true })
-  .then((json) => console.log(JSON.stringify(json, null, 2)));
+bgg.collection("carol81").then(console.log);
