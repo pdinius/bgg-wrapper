@@ -1,8 +1,13 @@
+import { invariant, invariantArray } from "../lib/utils";
 import {
   CollectionItemInformation,
+  CollectionResponse,
+  MegaCollectionItemInformation,
+  MegaCollectionResponse,
   RawCollectionItem,
   RawCollectionResponse,
 } from "../types/collection";
+import { ThingInformation } from "../types/thing";
 
 const RawCollectionTransformer = (
   collectionItem: RawCollectionItem
@@ -34,6 +39,7 @@ const RawCollectionTransformer = (
       wantToBuy: Boolean(status.wanttobuy),
       wishlist: Boolean(status.wishlist),
       preordered: Boolean(status.preordered),
+      lastModified: new Date(status.lastmodified),
     },
   };
 
@@ -79,17 +85,61 @@ const RawCollectionTransformer = (
   return res;
 };
 
-export const CollectionTransformer = (raw: RawCollectionResponse) => {
+export const CollectionTransformer = (
+  raw: RawCollectionResponse
+): CollectionResponse => {
   const {
-    items: { $, item },
+    items: {
+      $: { termsofuse: termsOfUse, pubdate },
+      item,
+    },
   } = raw;
-
-  const termsOfUse = $.termsofuse;
 
   return {
     termsOfUse,
-    items: Array.isArray(item)
-      ? item.map(RawCollectionTransformer)
-      : [item].map(RawCollectionTransformer),
+    retrievalDate: new Date(pubdate),
+    items: invariantArray(item).map(RawCollectionTransformer),
+  };
+};
+
+export const MegaCollectionItemTransformer = (
+  item: ThingInformation,
+  collectionItem: CollectionItemInformation
+): MegaCollectionItemInformation => {
+  const statistics = invariant(
+    item.statistics,
+    "Cannot transform item to mega collection item with statistics object."
+  );
+  const collectionStats = invariant(
+    collectionItem.statistics,
+    "Cannot transform collection item to mega collection item with statistics object."
+  );
+  return {
+    ...item,
+    ...collectionItem,
+    statistics,
+    rating: collectionStats.rating,
+  };
+};
+
+export const MegaCollectionTransformer = (
+  rawCollection: CollectionResponse,
+  rawItems: ThingInformation[]
+): MegaCollectionResponse => {
+  const newItems = rawItems.map((item) =>
+    MegaCollectionItemTransformer(
+      item,
+      invariant(
+        rawCollection.items.find((v) => v.id === item.id),
+        `Item with id ${item.id} not found in collection.`
+      )
+    )
+  );
+  const { termsOfUse, retrievalDate } = rawCollection;
+
+  return {
+    termsOfUse,
+    retrievalDate,
+    items: newItems,
   };
 };

@@ -141,6 +141,15 @@ export interface RawVersion {
   };
 }
 
+interface ItemRank {
+  type: string;
+  id: number;
+  name: string;
+  friendlyname: string;
+  value: number;
+  bayesaverage: number;
+};
+
 export interface RawStatistics {
   $: {
     page: number;
@@ -156,14 +165,7 @@ export interface RawStatistics {
       value: number;
     };
     ranks: {
-      rank: {
-        type: string;
-        id: number;
-        name: string;
-        friendlyname: string;
-        value: number;
-        bayesaverage: number;
-      }[];
+      rank: ItemRank | ItemRank[];
     };
     stddev: {
       value: number;
@@ -318,7 +320,7 @@ export interface Statistics {
   usersRated: number;
   averageRating: number;
   geekRating: number;
-  ranks: RankInformation[];
+  ranks: RankInformation[] | null;
   owned: number;
   trading: number;
   wanting: number;

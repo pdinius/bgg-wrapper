@@ -1,6 +1,6 @@
 // Options
 
-import { RankInformation } from "./thing";
+import { RankInformation, ThingInformation } from "./thing";
 
 export interface CollectionOptions {
   stats: boolean;
@@ -43,6 +43,7 @@ export interface RawCollectionItem {
     wanttobuy: number;
     wishlist: number;
     preordered: number;
+    lastmodified: string;
   };
   stats?: {
     $: {
@@ -121,11 +122,25 @@ export interface CollectionItemInformation {
     wantToBuy: boolean;
     wishlist: boolean;
     preordered: boolean;
+    lastModified: Date;
   };
   statistics?: CollectionStatistics;
 }
 
+export interface MegaCollectionItemInformation
+  extends Omit<CollectionItemInformation, "statistics">,
+  ThingInformation {
+    rating: number | null;
+  }
+
 export interface CollectionResponse {
   termsOfUse: string;
+  retrievalDate: Date;
   items: CollectionItemInformation[];
+}
+
+export interface MegaCollectionResponse {
+  termsOfUse: string;
+  retrievalDate: Date;
+  items: MegaCollectionItemInformation[];
 }

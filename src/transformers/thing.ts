@@ -1,3 +1,4 @@
+import { invariantArray } from "../lib/utils";
 import { LinkType } from "../types/general";
 import {
   ThingInformation,
@@ -11,12 +12,46 @@ import {
   RawThingResponse,
   RawVersion,
   SuggestedPlayerVotes,
+  ThingResponse,
 } from "../types/thing";
+
+const BLANK_PLAYER_AGE_POLL = {
+  "2": 0,
+  "3": 0,
+  "4": 0,
+  "5": 0,
+  "6": 0,
+  "8": 0,
+  "10": 0,
+  "12": 0,
+  "14": 0,
+  "16": 0,
+  "18": 0,
+  "21": 0,
+};
+
+const BLANK_LANGUAGE_DEPENDENCE_POLL = [
+  { votes: 0, value: "No necessary in-game text" },
+  {
+    votes: 0,
+    value: "Some necessary text - easily memorized or small crib sheet",
+  },
+  {
+    votes: 0,
+    value: "Moderate in-game text - needs crib sheet or paste ups",
+  },
+  {
+    votes: 0,
+    value: "Extensive use of text - massive conversion needed to be playable",
+  },
+  { votes: 0, value: "Unplayable in another language" },
+];
 
 const suggestedPlayersReducer = (
   a: { [key: number]: SuggestedPlayerVotes },
   b: RawSuggestedPlayersPollResult
 ) => {
+  if (b.result === undefined) return a;
   return {
     ...a,
     [b.$.numplayers]: {
@@ -114,8 +149,8 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
 
   const res: ThingInformation = {
     id: $.id,
-    name: name.find((n) => n.type === "primary")?.value || "",
-    alternateNames: name
+    name: invariantArray(name).find((n) => n.type === "primary")?.value || "",
+    alternateNames: invariantArray(name)
       .filter((n) => n.type !== "primary")
       .map((n) => n.value),
     image,
@@ -128,23 +163,25 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
     minPlayTime: minplaytime.value,
     maxPlayTime: maxplaytime.value,
     minAge: minage.value,
-    bestWith: (suggested_numplayers_results.result[0].value.match(/\d\S+/) ||
-      "")[0].replace(/\D+/, "-"),
+    bestWith: (suggested_numplayers_results.result[0].value?.match(/\d\S+/) || [
+      "",
+    ])[0].replace(/\D+/, "-"),
     recommendedWith: (suggested_numplayers_results.result[1].value.match(
       /\d\S+/
-    ) || "")[0].replace(/\D+/, "-"),
-    suggestedNumPlayersPoll: suggested_numplayers.results.reduce(
-      suggestedPlayersReducer,
-      {}
-    ),
-    suggestedPlayerAgePoll: suggested_playerage.results.result.reduce(
-      suggestedPlayerAgeReducer,
-      {}
-    ),
-    languageDependencePoll: language_dependence.results.result.reduce(
-      languageDependenceReducer,
-      []
-    ),
+    ) || [""])[0].replace(/\D+/, "-"),
+    suggestedNumPlayersPoll: invariantArray(
+      suggested_numplayers.results
+    ).reduce(suggestedPlayersReducer, {}),
+    suggestedPlayerAgePoll:
+      suggested_playerage.results?.result.reduce(
+        suggestedPlayerAgeReducer,
+        {}
+      ) || BLANK_PLAYER_AGE_POLL,
+    languageDependencePoll:
+      language_dependence.results?.result.reduce(
+        languageDependenceReducer,
+        []
+      ) || BLANK_LANGUAGE_DEPENDENCE_POLL,
     categories: link.reduce(linkReducer("boardgamecategory"), []),
     mechanics: link.reduce(linkReducer("boardgamemechanic"), []),
     families: link.reduce(linkReducer("boardgamefamily"), []),
@@ -183,12 +220,14 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
       usersRated: usersrated.value,
       averageRating: average.value,
       geekRating: bayesaverage.value,
-      ranks: rank.map((r) => ({
-        id: r.id,
-        category: r.name,
-        label: r.friendlyname,
-        rank: r.value,
-      })),
+      ranks: rank
+        ? invariantArray(rank).map((r) => ({
+            id: r.id,
+            category: r.name,
+            label: r.friendlyname,
+            rank: r.value,
+          }))
+        : null,
       owned: owned.value,
       trading: trading.value,
       wanting: wanting.value,
@@ -214,7 +253,7 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
   return res;
 };
 
-export const ThingTransformer = (raw: RawThingResponse) => {
+export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
   const {
     items: { $, item },
   } = raw;
