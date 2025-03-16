@@ -38,4 +38,24 @@ export const invariantArray = <T>(v: T | Array<T>): Array<T> => {
 export const invariant = <T>(el: T | null | undefined, msg: string): T => {
   if (!el) throw Error(msg);
   return el;
-}
+};
+
+export const decodeEntities = (encodedString: string) => {
+  const translate_re = /&(nbsp|amp|quot|lt|gt);/g;
+  const translate = {
+    nbsp: " ",
+    amp: "&",
+    quot: '"',
+    lt: "<",
+    gt: ">",
+  };
+
+  return encodedString
+    .replace(translate_re, (_, entity) => {
+      return translate[entity as keyof typeof translate];
+    })
+    .replace(/&#(\d+);/gi, function (_, numStr) {
+      const num = parseInt(numStr, 10);
+      return String.fromCharCode(num);
+    });
+};

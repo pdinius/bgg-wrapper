@@ -1,4 +1,4 @@
-import { invariantArray } from "../lib/utils";
+import { decodeEntities, invariantArray } from "../lib/utils";
 import { LinkType } from "../types/general";
 import {
   ThingInformation,
@@ -149,13 +149,13 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
 
   const res: ThingInformation = {
     id: $.id,
-    name: invariantArray(name).find((n) => n.type === "primary")?.value || "",
+    name: decodeEntities(invariantArray(name).find((n) => n.type === "primary")?.value || ""),
     alternateNames: invariantArray(name)
       .filter((n) => n.type !== "primary")
-      .map((n) => n.value),
+      .map((n) => decodeEntities(n.value)),
     image,
     thumbnail,
-    description,
+    description: decodeEntities(description),
     yearPublished: yearpublished.value,
     minPlayers: minplayers.value,
     maxPlayers: maxplayers.value,

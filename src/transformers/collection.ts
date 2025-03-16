@@ -1,4 +1,4 @@
-import { invariant, invariantArray } from "../lib/utils";
+import { decodeEntities, invariant, invariantArray } from "../lib/utils";
 import {
   CollectionItemInformation,
   CollectionResponse,
@@ -25,7 +25,7 @@ const RawCollectionTransformer = (
 
   const res: CollectionItemInformation = {
     id: objectid,
-    name: _content,
+    name: decodeEntities(_content),
     image,
     thumbnail,
     yearPublished: yearpublished,
