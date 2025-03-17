@@ -3,7 +3,7 @@ import { XMLAPI, XMLAPI2 } from "./lib/constants";
 import { RawThingResponse, ThingOptions, ThingResponse } from "./types/thing";
 import { ThingTransformer } from "./transformers/thing";
 import xmlToJson from "./lib/xmlToJson";
-import { CollectionOptions, RawCollectionResponse } from "./types/collection";
+import { CollectionOptions, CollectionResponse, RawCollectionResponse } from "./types/collection";
 import {
   CollectionTransformer,
   MegaCollectionTransformer,
@@ -109,12 +109,10 @@ export default class BGG {
     return CollectionTransformer(response);
   }
 
-  async megaCollection(username: string) {
-    const collectionResponse = await this.collection(username, { stats: true });
-    collectionResponse.items = collectionResponse.items.slice(0, 10);
-    const ids = collectionResponse.items.map((v) => v.id);
+  async addCompleteDataToCollection(cr: CollectionResponse) {
+    const ids = cr.items.map((v) => v.id);
     const thingResponse = await this.thing(ids, { stats: true });
 
-    return MegaCollectionTransformer(collectionResponse, thingResponse.items);
+    return MegaCollectionTransformer(cr, thingResponse.items);
   }
 }
