@@ -13,6 +13,8 @@ import {
   CompleteDataCollectionTransformer,
 } from "./transformers/collection";
 import { AlternateResponse, AlternateResult } from "./types/general";
+import { RawUserResponse } from "./types/user";
+import { UserTransformer } from "./transformers/user";
 
 export {
   CollectionResponse,
@@ -21,6 +23,7 @@ export {
   CompleteDataCollectionItemInformation,
 } from "./types/collection";
 export { ThingResponse, ThingInformation } from "./types/thing";
+export { UserResponse } from "./types/user";
 
 export default class BGG {
   private fetchFromBgg = async <T extends object>(uri: string): Promise<T> => {
@@ -123,5 +126,11 @@ export default class BGG {
     const thingResponse = await this.thing(ids, { stats: true });
 
     return CompleteDataCollectionTransformer(cr, thingResponse.items);
+  }
+
+  async user(username: string) {
+    const uri = generateURI(XMLAPI2, "user", { name: username });
+    const response = await this.fetchFromBgg<RawUserResponse>(uri);
+    return UserTransformer(response);
   }
 }
