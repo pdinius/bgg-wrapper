@@ -3,6 +3,5 @@ node_modules
 yarn.lock
 *.gitignore
 *.gitattributes
-package.json
 README.md
 tsconfig.json
