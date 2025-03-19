@@ -1,8 +1,8 @@
-src/lib
-src/transformers
-src/types
-src/index.ts
+src
 node_modules
 yarn.lock
 *.gitignore
 *.gitattributes
+package.json
+README.md
+tsconfig.json
