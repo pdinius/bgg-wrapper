@@ -100,6 +100,9 @@ export default class BGG {
     id: string | number | Array<string | number>,
     options?: Partial<ThingOptions>
   ) {
+    this.percentEmitter.dispatchEvent(
+      new CustomEvent("percent-updated", { detail: 0 })
+    );
     const chunks: (string | number)[] = [];
 
     if (Array.isArray(id)) {
