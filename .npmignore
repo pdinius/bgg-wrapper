@@ -1,6 +1,8 @@
-src
+src/lib
+src/transformers
+src/types
+src/index.ts
 node_modules
 yarn.lock
 *.gitignore
 *.gitattributes
-examples
