@@ -7,7 +7,7 @@ import {
   RawCollectionItem,
   RawCollectionResponse,
 } from "../types/collection";
-import { ThingInformation } from "../types/thing";
+import { ThingInformation, ThingResponse } from "../types/thing";
 
 const RawCollectionTransformer = (
   collectionItem: RawCollectionItem
@@ -123,23 +123,16 @@ export const CompleteDataCollectionItemTransformer = (
 };
 
 export const CompleteDataCollectionTransformer = (
-  rawCollection: CollectionResponse,
+  rawCollection: CollectionItemInformation[],
   rawItems: ThingInformation[]
-): CompleteDataCollectionResponse => {
-  const newItems = rawItems.map((item) =>
+): CompleteDataCollectionItemInformation[] => {
+  return rawItems.map((item) =>
     CompleteDataCollectionItemTransformer(
       item,
       invariant(
-        rawCollection.items.find((v) => v.id === item.id),
+        rawCollection.find((v) => v.id === item.id),
         `Item with id ${item.id} not found in collection.`
       )
     )
   );
-  const { termsOfUse, retrievalDate } = rawCollection;
-
-  return {
-    termsOfUse,
-    retrievalDate,
-    items: newItems,
-  };
 };

@@ -4,6 +4,7 @@ import { RawThingResponse, ThingOptions, ThingResponse } from "./types/thing";
 import { ThingTransformer } from "./transformers/thing";
 import xmlToJson from "./lib/xmlToJson";
 import {
+  CollectionItemInformation,
   CollectionOptions,
   CollectionResponse,
   RawCollectionResponse,
@@ -25,9 +26,36 @@ export {
 export { ThingResponse, ThingInformation } from "./types/thing";
 export { UserResponse } from "./types/user";
 
+const MAX_RETRIES = 20;
+
 export default class BGG {
+  private signal: AbortSignal | undefined;
+  private percentEmitter = new EventTarget();
+  private retries = 0;
+
+  constructor(
+    props?: Partial<{
+      signal: AbortSignal;
+      progressListener: (n: number) => void;
+    }>
+  ) {
+    if (props === undefined) return;
+    const { signal, progressListener } = props;
+    this.signal = signal;
+    if (progressListener) {
+      this.percentEmitter.addEventListener(
+        "percent-updated",
+        (e: CustomEventInit<number>) => {
+          if (e.detail) {
+            progressListener(e.detail);
+          }
+        }
+      );
+    }
+  }
+
   private fetchFromBgg = async <T extends object>(uri: string): Promise<T> => {
-    const data = await fetch(uri);
+    const data = await fetch(uri, { signal: this.signal });
     const text = await data.text();
     const json: T | AlternateResponse = xmlToJson(text);
 
@@ -48,6 +76,23 @@ export default class BGG {
         status: data.status,
         message: `Request failed with status ${data.status}.`,
       };
+    }
+  };
+
+  private handleError = (e: AlternateResult) => {
+    if ("status" in e) {
+      if (
+        ++this.retries < MAX_RETRIES &&
+        (e.status === 429 || e.status === 202)
+      )
+        return;
+    }
+    const oldRetries = this.retries;
+    this.retries = 0;
+    if (oldRetries === MAX_RETRIES) {
+      throw Error("Reached maximum retries");
+    } else {
+      throw e;
     }
   };
 
@@ -89,43 +134,54 @@ export default class BGG {
         const partial = ThingTransformer(response);
         if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
         results.items.push(...partial.items);
+        this.percentEmitter.dispatchEvent(
+          new CustomEvent("percent-updated", { detail: i / uris.length })
+        );
         if (i < uris.length - 1) {
-          pause(500);
+          await pause(0.5);
         }
-      } catch (e: unknown) {
-        const { status } = e as AlternateResult;
-        if (status === 429) {
-          await pause(5000);
-          --i;
-          continue;
-        } else {
-          throw e;
-        }
+      } catch (e) {
+        this.handleError(e as AlternateResult);
+        await pause(5);
+        --i;
+        continue;
       }
     }
+    this.percentEmitter.dispatchEvent(
+      new CustomEvent("percent-updated", { detail: 1 })
+    );
     return results;
   }
 
-  async collection(username: string, options?: Partial<CollectionOptions>) {
+  async collection(
+    username: string,
+    options?: Partial<CollectionOptions>
+  ): Promise<CollectionResponse> {
     const uri = generateURI(XMLAPI2, "collection", {
       username,
       ...options,
     });
 
-    const response = await this.fetchFromBgg<RawCollectionResponse>(uri);
-    return CollectionTransformer(response);
+    try {
+      const response = await this.fetchFromBgg<RawCollectionResponse>(uri);
+      return CollectionTransformer(response);
+    } catch (e) {
+      this.handleError(e as AlternateResult);
+      await pause(5);
+      return this.collection(username, options);
+    }
   }
 
-  async addCompleteDataToCollection(cr: CollectionResponse) {
-    if (cr.items.some((item) => item.statistics === undefined)) {
+  async addCompleteDataToCollectionItems(items: CollectionItemInformation[]) {
+    if (items.some((item) => item.statistics === undefined)) {
       throw Error(
         `"stats" option on collection must be set to true to generate complete data collection.`
       );
     }
-    const ids = cr.items.map((v) => v.id);
+    const ids = items.map((v) => v.id);
     const thingResponse = await this.thing(ids, { stats: true });
 
-    return CompleteDataCollectionTransformer(cr, thingResponse.items);
+    return CompleteDataCollectionTransformer(items, thingResponse.items);
   }
 
   async user(username: string) {
