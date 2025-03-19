@@ -128,7 +128,7 @@ export interface CollectionItemInformation {
   statistics?: CollectionStatistics;
 }
 
-export interface MegaCollectionItemInformation
+export interface CompleteDataCollectionItemInformation
   extends Omit<CollectionItemInformation, "statistics">,
     ThingInformation {
   rating: number | null;
@@ -140,8 +140,8 @@ export interface CollectionResponse {
   items: CollectionItemInformation[];
 }
 
-export interface MegaCollectionResponse {
+export interface CompleteDataCollectionResponse {
   termsOfUse: string;
   retrievalDate: Date;
-  items: MegaCollectionItemInformation[];
+  items: CompleteDataCollectionItemInformation[];
 }

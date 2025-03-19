@@ -2,8 +2,8 @@ import { decodeEntities, invariant, invariantArray } from "../lib/utils";
 import {
   CollectionItemInformation,
   CollectionResponse,
-  MegaCollectionItemInformation,
-  MegaCollectionResponse,
+  CompleteDataCollectionItemInformation,
+  CompleteDataCollectionResponse,
   RawCollectionItem,
   RawCollectionResponse,
 } from "../types/collection";
@@ -102,17 +102,17 @@ export const CollectionTransformer = (
   };
 };
 
-export const MegaCollectionItemTransformer = (
+export const CompleteDataCollectionItemTransformer = (
   item: ThingInformation,
   collectionItem: CollectionItemInformation
-): MegaCollectionItemInformation => {
+): CompleteDataCollectionItemInformation => {
   const statistics = invariant(
     item.statistics,
-    "Cannot transform item to mega collection item with statistics object."
+    "Cannot transform item to complete data collection item without statistics object."
   );
   const collectionStats = invariant(
     collectionItem.statistics,
-    "Cannot transform collection item to mega collection item with statistics object."
+    "Cannot transform collection item to complete data collection item without statistics object."
   );
   return {
     ...item,
@@ -122,12 +122,12 @@ export const MegaCollectionItemTransformer = (
   };
 };
 
-export const MegaCollectionTransformer = (
+export const CompleteDataCollectionTransformer = (
   rawCollection: CollectionResponse,
   rawItems: ThingInformation[]
-): MegaCollectionResponse => {
+): CompleteDataCollectionResponse => {
   const newItems = rawItems.map((item) =>
-    MegaCollectionItemTransformer(
+    CompleteDataCollectionItemTransformer(
       item,
       invariant(
         rawCollection.items.find((v) => v.id === item.id),

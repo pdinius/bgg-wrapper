@@ -3,18 +3,22 @@ import { XMLAPI, XMLAPI2 } from "./lib/constants";
 import { RawThingResponse, ThingOptions, ThingResponse } from "./types/thing";
 import { ThingTransformer } from "./transformers/thing";
 import xmlToJson from "./lib/xmlToJson";
-import { CollectionOptions, CollectionResponse, RawCollectionResponse } from "./types/collection";
+import {
+  CollectionOptions,
+  CollectionResponse,
+  RawCollectionResponse,
+} from "./types/collection";
 import {
   CollectionTransformer,
-  MegaCollectionTransformer,
+  CompleteDataCollectionTransformer,
 } from "./transformers/collection";
 import { AlternateResponse, AlternateResult } from "./types/general";
 
 export {
   CollectionResponse,
   CollectionItemInformation,
-  MegaCollectionResponse,
-  MegaCollectionItemInformation,
+  CompleteDataCollectionResponse,
+  CompleteDataCollectionItemInformation,
 } from "./types/collection";
 export { ThingResponse, ThingInformation } from "./types/thing";
 
@@ -110,9 +114,14 @@ export default class BGG {
   }
 
   async addCompleteDataToCollection(cr: CollectionResponse) {
+    if (cr.items.some((item) => item.statistics === undefined)) {
+      throw Error(
+        `"stats" option on collection must be set to true to generate complete data collection.`
+      );
+    }
     const ids = cr.items.map((v) => v.id);
     const thingResponse = await this.thing(ids, { stats: true });
 
-    return MegaCollectionTransformer(cr, thingResponse.items);
+    return CompleteDataCollectionTransformer(cr, thingResponse.items);
   }
 }
