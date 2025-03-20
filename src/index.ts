@@ -1,8 +1,8 @@
-import { cleanString, generateURI, pause } from "./lib/utils";
-import { XMLAPI, XMLAPI2 } from "./lib/constants";
+import { cleanString, generateURI, pause } from "./shared/utils";
+import { XMLAPI, XMLAPI2, MAX_RETRIES } from "./shared/constants";
 import { RawThingResponse, ThingOptions, ThingResponse } from "./types/thing";
 import { ThingTransformer } from "./transformers/thing";
-import xmlToJson from "./lib/xmlToJson";
+import xmlToJson from "./shared/xmlToJson";
 import {
   CollectionItemInformation,
   CollectionOptions,
@@ -25,8 +25,6 @@ export {
 } from "./types/collection";
 export { ThingResponse, ThingInformation } from "./types/thing";
 export { UserResponse } from "./types/user";
-
-const MAX_RETRIES = 20;
 
 export default class BGG {
   private signal: AbortSignal | undefined;
@@ -80,16 +78,14 @@ export default class BGG {
   };
 
   private handleError = (e: AlternateResult) => {
-    if ("status" in e) {
-      if (
-        ++this.retries < MAX_RETRIES &&
-        (e.status === 429 || e.status === 202)
-      )
-        return;
+    if (
+      "status" in e &&
+      ++this.retries < MAX_RETRIES &&
+      [202, 429].includes(e.status)
+    ) {
+      return;
     }
-    const oldRetries = this.retries;
-    this.retries = 0;
-    if (oldRetries === MAX_RETRIES) {
+    if (this.retries >= MAX_RETRIES) {
       throw Error("Reached maximum retries");
     } else {
       throw e;
@@ -100,6 +96,7 @@ export default class BGG {
     id: string | number | Array<string | number>,
     options?: Partial<ThingOptions>
   ) {
+    this.retries = 0;
     this.percentEmitter.dispatchEvent(
       new CustomEvent("percent-updated", { detail: 0 })
     );
@@ -160,6 +157,7 @@ export default class BGG {
     username: string,
     options?: Partial<CollectionOptions>
   ): Promise<CollectionResponse> {
+    this.retries = 0;
     const uri = generateURI(XMLAPI2, "collection", {
       username,
       ...options,
@@ -188,6 +186,7 @@ export default class BGG {
   }
 
   async user(username: string) {
+    this.retries = 0;
     const uri = generateURI(XMLAPI2, "user", { name: username });
     const response = await this.fetchFromBgg<RawUserResponse>(uri);
     return UserTransformer(response);

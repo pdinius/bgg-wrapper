@@ -1,4 +1,4 @@
-import { decodeEntities, invariantArray } from "../lib/utils";
+import { decodeEntities, invariantArray } from "../shared/utils";
 import { LinkType } from "../types/general";
 import {
   ThingInformation,

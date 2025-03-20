@@ -7,3 +7,4 @@ export const LANGUAGE_DEPENDENCE_LABELS = [
   "Extensive use of text - massive conversion needed to be playable",
   "Unplayable in another language",
 ] as const;
+export const MAX_RETRIES = 20;

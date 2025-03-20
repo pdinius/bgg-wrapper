@@ -1,7 +1,8 @@
-import { decodeEntities, invariant, invariantArray } from "../lib/utils";
+import { decodeEntities, invariant, invariantArray } from "../shared/utils";
 import {
   CollectionItemInformation,
   CollectionResponse,
+  CollectionStatistics,
   CompleteDataCollectionItemInformation,
   CompleteDataCollectionResponse,
   RawCollectionItem,
@@ -110,15 +111,64 @@ export const CompleteDataCollectionItemTransformer = (
     item.statistics,
     "Cannot transform item to complete data collection item without statistics object."
   );
-  const collectionStats = invariant(
+  const collectionStats: Omit<CollectionStatistics, "ranks"> &
+    Partial<Pick<CollectionStatistics, "ranks">> = invariant(
     collectionItem.statistics,
     "Cannot transform collection item to complete data collection item without statistics object."
   );
+  delete collectionStats.ranks;
+
+  const {
+    categories,
+    mechanics,
+    families,
+    expansions,
+    accessories,
+    reimplements,
+    reimplementedBy,
+    designers,
+    artists,
+    publishers,
+  } = item;
   return {
-    ...item,
     ...collectionItem,
-    statistics,
-    rating: collectionStats.rating,
+    categories,
+    mechanics,
+    families,
+    expansions,
+    accessories,
+    reimplements,
+    reimplementedBy,
+    designers,
+    artists,
+    publishers,
+    statistics: {
+      ...collectionStats,
+      rating: collectionStats.rating || -1,
+      bestWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
+        (a: { pc: number; v: number }, [pc, { best }]) => {
+          return a.v > best ? a : { pc: Number(pc), v: best };
+        },
+        { pc: -1, v: -Infinity }
+      ).pc,
+      suggestedPlayerAge: Object.entries(item.suggestedPlayerAgePoll).reduce(
+        (a: { age: number; v: number }, [age, v]) => {
+          return a.v > v ? a : { age: Number(age), v };
+        },
+        { age: -1, v: -Infinity }
+      ).age,
+      languageDependence: item.languageDependencePoll.reduce(
+        (a: { value: string; votes: number }, b) => {
+          return a.votes > b.votes ? a : b;
+        },
+        { value: "", votes: -Infinity }
+      ).value,
+      rank: item.statistics?.ranks?.find((r) => r.id === 1)?.rank || -1,
+      trading: item.statistics?.trading || -1,
+      wanting: item.statistics?.wanting || -1,
+      wishing: item.statistics?.wishing || -1,
+      weight: item.statistics?.weight || -1,
+    },
   };
 };
 

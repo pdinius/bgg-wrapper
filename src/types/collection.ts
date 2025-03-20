@@ -1,6 +1,6 @@
 // Options
 
-import { RankInformation, ThingInformation } from "./thing";
+import { LinkInformation, RankInformation, ThingInformation } from "./thing";
 
 export interface CollectionOptions {
   stats: boolean;
@@ -104,7 +104,7 @@ export interface CollectionStatistics {
   usersRated: number;
   averageRating: number;
   geekRating: number;
-  ranks: RankInformation[];
+  ranks: RankInformation[] | null;
 }
 
 export interface CollectionItemInformation {
@@ -128,10 +128,31 @@ export interface CollectionItemInformation {
   statistics?: CollectionStatistics;
 }
 
+interface CompleteStatistics extends Omit<CollectionStatistics, "ranks"> {
+  rating: number;
+  bestWith: number;
+  suggestedPlayerAge: number;
+  languageDependence: string;
+  rank: number;
+  trading: number;
+  wanting: number;
+  wishing: number;
+  weight: number;
+}
+
 export interface CompleteDataCollectionItemInformation
-  extends Omit<CollectionItemInformation, "statistics">,
-    ThingInformation {
-  rating: number | null;
+  extends Omit<CollectionItemInformation, "statistics"> {
+  statistics: CompleteStatistics;
+  categories: LinkInformation[];
+  mechanics: LinkInformation[];
+  families: LinkInformation[];
+  expansions: LinkInformation[];
+  accessories: LinkInformation[];
+  reimplements: LinkInformation[];
+  reimplementedBy: LinkInformation[];
+  designers: LinkInformation[];
+  artists: LinkInformation[];
+  publishers: LinkInformation[];
 }
 
 export interface CollectionResponse {
