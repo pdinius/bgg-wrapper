@@ -1,4 +1,8 @@
 import {
+  CompleteDataCollectionItemInformation,
+  CompleteStatistics,
+} from "./collection";
+import {
   LanguageDependenceLevel,
   LinkType,
   NameType,
@@ -148,7 +152,7 @@ interface ItemRank {
   friendlyname: string;
   value: number;
   bayesaverage: number;
-};
+}
 
 export interface RawStatistics {
   $: {
@@ -314,7 +318,7 @@ export interface RankInformation {
   category: string;
   label: string;
   rank: number;
-};
+}
 
 export interface Statistics {
   usersRated: number;
@@ -383,4 +387,9 @@ export interface ThingInformation {
 export interface ThingResponse {
   termsOfUse: string;
   items: ThingInformation[];
+}
+
+export interface TruncatedThingInformation
+  extends Omit<CompleteDataCollectionItemInformation, "statistics" | "numPlays" | "status"> {
+  statistics: Omit<CompleteStatistics, "rating">;
 }

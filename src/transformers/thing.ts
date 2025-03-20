@@ -1,4 +1,4 @@
-import { decodeEntities, invariantArray } from "../shared/utils";
+import { decodeEntities, invariant, invariantArray } from "../shared/utils";
 import { LinkType } from "../types/general";
 import {
   ThingInformation,
@@ -13,6 +13,7 @@ import {
   RawVersion,
   SuggestedPlayerVotes,
   ThingResponse,
+  TruncatedThingInformation,
 } from "../types/thing";
 
 const BLANK_PLAYER_AGE_POLL = {
@@ -149,7 +150,9 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
 
   const res: ThingInformation = {
     id: $.id,
-    name: decodeEntities(invariantArray(name).find((n) => n.type === "primary")?.value || ""),
+    name: decodeEntities(
+      invariantArray(name).find((n) => n.type === "primary")?.value || ""
+    ),
     alternateNames: invariantArray(name)
       .filter((n) => n.type !== "primary")
       .map((n) => decodeEntities(n.value)),
@@ -264,5 +267,77 @@ export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
     items: Array.isArray(item)
       ? item.map(RawItemTransformer)
       : [item].map(RawItemTransformer),
+  };
+};
+
+export const TruncatedThingTransformer = (
+  item: ThingInformation
+): TruncatedThingInformation => {
+  const statistics = invariant(
+    item.statistics,
+    "Cannot transform item to complete data collection item without statistics object."
+  );
+
+  const {
+    categories,
+    mechanics,
+    families,
+    expansions,
+    accessories,
+    reimplements,
+    reimplementedBy,
+    designers,
+    artists,
+    publishers,
+  } = item;
+  return {
+    categories,
+    mechanics,
+    families,
+    expansions,
+    accessories,
+    reimplements,
+    reimplementedBy,
+    designers,
+    artists,
+    publishers,
+    statistics: {
+      owned: statistics.owned,
+      usersRated: statistics.usersRated,
+      averageRating: statistics.averageRating,
+      geekRating: statistics.geekRating,
+      minPlayers: item.minPlayers,
+      maxPlayers: item.maxPlayers,
+      minPlayTime: item.minPlayTime,
+      maxPlayTime: item.maxPlayTime,
+      bestWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
+        (a: { pc: number; v: number }, [pc, { best }]) => {
+          return a.v > best ? a : { pc: Number(pc), v: best };
+        },
+        { pc: -1, v: -Infinity }
+      ).pc,
+      suggestedPlayerAge: Object.entries(item.suggestedPlayerAgePoll).reduce(
+        (a: { age: number; v: number }, [age, v]) => {
+          return a.v > v ? a : { age: Number(age), v };
+        },
+        { age: -1, v: -Infinity }
+      ).age,
+      languageDependence: item.languageDependencePoll.reduce(
+        (a: { value: string; votes: number }, b) => {
+          return a.votes > b.votes ? a : b;
+        },
+        { value: "", votes: -Infinity }
+      ).value,
+      rank: item.statistics?.ranks?.find((r) => r.id === 1)?.rank || -1,
+      trading: item.statistics?.trading || -1,
+      wanting: item.statistics?.wanting || -1,
+      wishing: item.statistics?.wishing || -1,
+      weight: item.statistics?.weight || -1,
+    },
+    id: item.id,
+    name: item.name,
+    image: item.image,
+    thumbnail: item.thumbnail,
+    yearPublished: item.yearPublished,
   };
 };

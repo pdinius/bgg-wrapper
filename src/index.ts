@@ -1,7 +1,15 @@
 import { cleanString, generateURI, pause } from "./shared/utils";
 import { XMLAPI, XMLAPI2, MAX_RETRIES } from "./shared/constants";
-import { RawThingResponse, ThingOptions, ThingResponse } from "./types/thing";
-import { ThingTransformer } from "./transformers/thing";
+import {
+  RawThingResponse,
+  ThingInformation,
+  ThingOptions,
+  ThingResponse,
+} from "./types/thing";
+import {
+  ThingTransformer,
+  TruncatedThingTransformer,
+} from "./transformers/thing";
 import xmlToJson from "./shared/xmlToJson";
 import {
   CollectionItemInformation,
@@ -151,6 +159,11 @@ export default class BGG {
       new CustomEvent("percent-updated", { detail: 1 })
     );
     return results;
+  }
+
+  async truncatedThing(id: string | number | Array<string | number>) {
+    const thingResponse = await this.thing(id, { stats: true });
+    return thingResponse.items.map(TruncatedThingTransformer);
   }
 
   async collection(
