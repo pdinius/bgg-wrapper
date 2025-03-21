@@ -36,24 +36,35 @@ export { UserResponse } from "./types/user";
 
 export default class BGG {
   private signal: AbortSignal | undefined;
-  private percentEmitter = new EventTarget();
+  private progressEmitter = new EventTarget();
   private retries = 0;
 
   constructor(
     props?: Partial<{
       signal: AbortSignal;
-      progressListener: (n: number) => void;
+      progressListener: (items: ThingInformation[]) => void;
+      percentListener: (percent: number) => void;
     }>
   ) {
     if (props === undefined) return;
-    const { signal, progressListener } = props;
+    const { signal, progressListener, percentListener } = props;
     this.signal = signal;
     if (progressListener) {
-      this.percentEmitter.addEventListener(
-        "percent-updated",
-        (e: CustomEventInit<number>) => {
+      this.progressEmitter.addEventListener(
+        "progress",
+        (e: CustomEventInit<ThingInformation[]>) => {
           if (e.detail) {
             progressListener(e.detail);
+          }
+        }
+      );
+    }
+    if (percentListener) {
+      this.progressEmitter.addEventListener(
+        "percent",
+        (e: CustomEventInit<number>) => {
+          if (e.detail) {
+            percentListener(e.detail);
           }
         }
       );
@@ -105,9 +116,6 @@ export default class BGG {
     options?: Partial<ThingOptions>
   ) {
     this.retries = 0;
-    this.percentEmitter.dispatchEvent(
-      new CustomEvent("percent-updated", { detail: 0 })
-    );
     const chunks: (string | number)[] = [];
 
     if (Array.isArray(id)) {
@@ -142,8 +150,11 @@ export default class BGG {
         const partial = ThingTransformer(response);
         if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
         results.items.push(...partial.items);
-        this.percentEmitter.dispatchEvent(
-          new CustomEvent("percent-updated", { detail: i / uris.length })
+        this.progressEmitter.dispatchEvent(
+          new CustomEvent("progress", { detail: partial.items })
+        );
+        this.progressEmitter.dispatchEvent(
+          new CustomEvent("percent", { detail: i / uris.length })
         );
         if (i < uris.length - 1) {
           await pause(0.5);
@@ -155,8 +166,8 @@ export default class BGG {
         continue;
       }
     }
-    this.percentEmitter.dispatchEvent(
-      new CustomEvent("percent-updated", { detail: 1 })
+    this.progressEmitter.dispatchEvent(
+      new CustomEvent("percent", { detail: 1 })
     );
     return results;
   }
@@ -205,3 +216,8 @@ export default class BGG {
     return UserTransformer(response);
   }
 }
+
+const bgg = new BGG();
+bgg.truncatedThing(233078).then((tt) => {
+  console.log(JSON.stringify(tt, null, 2));
+});
