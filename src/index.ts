@@ -216,8 +216,3 @@ export default class BGG {
     return UserTransformer(response);
   }
 }
-
-const bgg = new BGG();
-bgg.truncatedThing(233078).then((tt) => {
-  console.log(JSON.stringify(tt, null, 2));
-});
