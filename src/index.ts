@@ -157,7 +157,11 @@ export default class BGG {
         if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
         results.items.push(...partial.items);
         this.progressEmitter.dispatchEvent(
-          new CustomEvent("progress", { detail: truncated ? partial.items.map(TruncatedThingTransformer) : partial.items })
+          new CustomEvent("progress", {
+            detail: truncated
+              ? partial.items.map(TruncatedThingTransformer)
+              : partial.items,
+          })
         );
         this.progressEmitter.dispatchEvent(
           new CustomEvent("percent", { detail: i / uris.length })
@@ -180,7 +184,10 @@ export default class BGG {
   }
 
   async truncatedThing(id: string | number | Array<string | number>) {
-    const thingResponse = await this.thing(id, { stats: true, truncated: true });
+    const thingResponse = await this.thing(id, {
+      stats: true,
+      truncated: true,
+    });
     return thingResponse.items.map(TruncatedThingTransformer);
   }
 

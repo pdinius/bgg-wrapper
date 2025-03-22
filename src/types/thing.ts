@@ -350,6 +350,7 @@ export interface Version {
 
 export interface ThingInformation {
   id: number;
+  type: ThingType;
   name: string;
   alternateNames: string[];
   image: string;
@@ -391,6 +392,10 @@ export interface ThingResponse {
 }
 
 export interface TruncatedThingInformation
-  extends Omit<CompleteDataCollectionItemInformation, "statistics" | "numPlays" | "status"> {
+  extends Omit<
+    CompleteDataCollectionItemInformation,
+    "statistics" | "numPlays" | "status"
+  > {
+  type: ThingType;
   statistics: Omit<CompleteStatistics, "rating">;
 }

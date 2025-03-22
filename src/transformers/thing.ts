@@ -150,6 +150,7 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
 
   const res: ThingInformation = {
     id: $.id,
+    type: $.type,
     name: decodeEntities(
       invariantArray(name).find((n) => n.type === "primary")?.value || ""
     ),
@@ -291,16 +292,12 @@ export const TruncatedThingTransformer = (
     publishers,
   } = item;
   return {
-    categories,
-    mechanics,
-    families,
-    expansions,
-    accessories,
-    reimplements,
-    reimplementedBy,
-    designers,
-    artists,
-    publishers,
+    id: item.id,
+    name: item.name,
+    type: item.type,
+    image: item.image,
+    thumbnail: item.thumbnail,
+    yearPublished: item.yearPublished,
     statistics: {
       owned: statistics.owned,
       usersRated: statistics.usersRated,
@@ -334,10 +331,15 @@ export const TruncatedThingTransformer = (
       wishing: item.statistics?.wishing || -1,
       weight: item.statistics?.weight || -1,
     },
-    id: item.id,
-    name: item.name,
-    image: item.image,
-    thumbnail: item.thumbnail,
-    yearPublished: item.yearPublished,
+    categories,
+    mechanics,
+    families,
+    expansions,
+    accessories,
+    reimplements,
+    reimplementedBy,
+    designers,
+    artists,
+    publishers,
   };
 };
