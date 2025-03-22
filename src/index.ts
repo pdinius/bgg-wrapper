@@ -131,6 +131,12 @@ export default class BGG {
       ratingcomments = true;
     }
 
+    let truncated = false;
+    if (options && "truncated" in options) {
+      truncated = true;
+      delete options.truncated;
+    }
+
     const uris = chunks.map((id) =>
       generateURI(XMLAPI2, "thing", {
         id,
@@ -151,7 +157,7 @@ export default class BGG {
         if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
         results.items.push(...partial.items);
         this.progressEmitter.dispatchEvent(
-          new CustomEvent("progress", { detail: partial.items })
+          new CustomEvent("progress", { detail: truncated ? partial.items.map(TruncatedThingTransformer) : partial.items })
         );
         this.progressEmitter.dispatchEvent(
           new CustomEvent("percent", { detail: i / uris.length })
@@ -161,6 +167,7 @@ export default class BGG {
         }
       } catch (e) {
         this.handleError(e as AlternateResult);
+        console.log("pausing for 5 seconds");
         await pause(5);
         --i;
         continue;
@@ -173,7 +180,7 @@ export default class BGG {
   }
 
   async truncatedThing(id: string | number | Array<string | number>) {
-    const thingResponse = await this.thing(id, { stats: true });
+    const thingResponse = await this.thing(id, { stats: true, truncated: true });
     return thingResponse.items.map(TruncatedThingTransformer);
   }
 

@@ -19,6 +19,7 @@ export interface ThingOptions {
   comments: boolean;
   ratings: boolean;
   page: number;
+  truncated: boolean;
 }
 
 // Raw Response
