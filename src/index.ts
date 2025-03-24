@@ -12,15 +12,11 @@ import {
 } from "./transformers/thing";
 import xmlToJson from "./shared/xmlToJson";
 import {
-  CollectionItemInformation,
   CollectionOptions,
   CollectionResponse,
   RawCollectionResponse,
 } from "./types/collection";
-import {
-  CollectionTransformer,
-  CompleteDataCollectionTransformer,
-} from "./transformers/collection";
+import { CollectionTransformer } from "./transformers/collection";
 import { AlternateResponse, AlternateResult } from "./types/general";
 import { RawUserResponse } from "./types/user";
 import { UserTransformer } from "./transformers/user";
@@ -157,7 +153,11 @@ export default class BGG {
         if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
         results.items.push(...partial.items);
         this.progressEmitter.dispatchEvent(
-          new CustomEvent("progress", { detail: truncated ? partial.items.map(TruncatedThingTransformer) : partial.items })
+          new CustomEvent("progress", {
+            detail: truncated
+              ? partial.items.map(TruncatedThingTransformer)
+              : partial.items,
+          })
         );
         this.progressEmitter.dispatchEvent(
           new CustomEvent("percent", { detail: i / uris.length })
@@ -180,7 +180,10 @@ export default class BGG {
   }
 
   async truncatedThing(id: string | number | Array<string | number>) {
-    const thingResponse = await this.thing(id, { stats: true, truncated: true });
+    const thingResponse = await this.thing(id, {
+      stats: true,
+      truncated: true,
+    });
     return thingResponse.items.map(TruncatedThingTransformer);
   }
 
@@ -202,18 +205,6 @@ export default class BGG {
       await pause(5);
       return this.collection(username, options);
     }
-  }
-
-  async addCompleteDataToCollectionItems(items: CollectionItemInformation[]) {
-    if (items.some((item) => item.statistics === undefined)) {
-      throw Error(
-        `"stats" option on collection must be set to true to generate complete data collection.`
-      );
-    }
-    const ids = items.map((v) => v.id);
-    const thingResponse = await this.thing(ids, { stats: true });
-
-    return CompleteDataCollectionTransformer(items, thingResponse.items);
   }
 
   async user(username: string) {

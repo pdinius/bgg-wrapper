@@ -38,7 +38,7 @@ const RawCollectionTransformer = (
       want: Boolean(status.want),
       wantToPlay: Boolean(status.wanttoplay),
       wantToBuy: Boolean(status.wanttobuy),
-      wishlist: Boolean(status.wishlist),
+      wishlist: (status.wishlist && status.wishlistpriority) || 0,
       preordered: Boolean(status.preordered),
       lastModified: new Date(status.lastmodified),
     },
@@ -170,19 +170,4 @@ export const CompleteDataCollectionItemTransformer = (
       weight: item.statistics?.weight || -1,
     },
   };
-};
-
-export const CompleteDataCollectionTransformer = (
-  rawCollection: CollectionItemInformation[],
-  rawItems: ThingInformation[]
-): CompleteDataCollectionItemInformation[] => {
-  return rawItems.map((item) =>
-    CompleteDataCollectionItemTransformer(
-      item,
-      invariant(
-        rawCollection.find((v) => v.id === item.id),
-        `Item with id ${item.id} not found in collection.`
-      )
-    )
-  );
 };

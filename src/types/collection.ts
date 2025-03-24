@@ -43,6 +43,7 @@ export interface RawCollectionItem {
     wanttoplay: number;
     wanttobuy: number;
     wishlist: number;
+    wishlistpriority: number;
     preordered: number;
     lastmodified: string;
   };
@@ -121,7 +122,7 @@ export interface CollectionItemInformation {
     want: boolean;
     wantToPlay: boolean;
     wantToBuy: boolean;
-    wishlist: boolean;
+    wishlist: number;
     preordered: boolean;
     lastModified: Date;
   };
