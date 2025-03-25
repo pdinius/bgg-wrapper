@@ -1,6 +1,6 @@
 // Options
 
-import { LinkInformation, RankInformation, ThingInformation } from "./thing";
+import { LinkInformation, RankInformation } from "./thing";
 
 export interface CollectionOptions {
   stats: boolean;
@@ -31,10 +31,10 @@ export interface RawCollectionItem {
     };
     _content: string;
   };
-  yearpublished: number;
+  yearpublished?: number;
   image: string;
   thumbnail: string;
-  numplays: number;
+  numplays?: number;
   status: {
     own: number;
     prevowned: number;
@@ -49,10 +49,10 @@ export interface RawCollectionItem {
   };
   stats?: {
     $: {
-      minplayers: number;
-      maxplayers: number;
-      minplaytime: number;
-      maxplaytime: number;
+      minplayers?: number;
+      maxplayers?: number;
+      minplaytime?: number;
+      maxplaytime?: number;
       playingtime: number;
       numowned: number;
     };
@@ -98,8 +98,8 @@ export interface RawCollectionResponse {
 export interface CollectionStatistics {
   minPlayers: number;
   maxPlayers: number;
-  minPlayTime: number;
-  maxPlayTime: number;
+  minPlayTime?: number;
+  maxPlayTime?: number;
   owned: number;
   rating: number | null;
   usersRated: number;
@@ -113,7 +113,7 @@ export interface CollectionItemInformation {
   name: string;
   image: string;
   thumbnail: string;
-  yearPublished: number;
+  yearPublished: number | null;
   numPlays: number;
   status: {
     own: boolean;

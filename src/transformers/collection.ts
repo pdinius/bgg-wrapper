@@ -4,11 +4,10 @@ import {
   CollectionResponse,
   CollectionStatistics,
   CompleteDataCollectionItemInformation,
-  CompleteDataCollectionResponse,
   RawCollectionItem,
   RawCollectionResponse,
 } from "../types/collection";
-import { ThingInformation, ThingResponse } from "../types/thing";
+import { ThingInformation } from "../types/thing";
 
 const RawCollectionTransformer = (
   collectionItem: RawCollectionItem
@@ -29,8 +28,8 @@ const RawCollectionTransformer = (
     name: decodeEntities(_content),
     image,
     thumbnail,
-    yearPublished: yearpublished,
-    numPlays: numplays,
+    yearPublished: yearpublished || null,
+    numPlays: numplays || 0,
     status: {
       own: Boolean(status.own),
       prevOwned: Boolean(status.prevowned),
@@ -65,10 +64,10 @@ const RawCollectionTransformer = (
     const ranksArr = Array.isArray(rank) ? rank : [rank];
 
     res.statistics = {
-      minPlayers,
-      maxPlayers,
-      minPlayTime,
-      maxPlayTime,
+      minPlayers: minPlayers || -1,
+      maxPlayers: maxPlayers || -1,
+      minPlayTime: minPlayTime || -1,
+      maxPlayTime: maxPlayTime || -1,
       owned,
       rating: rating === "N/A" ? -1 : rating,
       usersRated,

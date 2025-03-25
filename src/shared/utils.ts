@@ -1,5 +1,3 @@
-import { AlternateResult } from "../types/general";
-
 export const generateURI = (
   base: string,
   route: string,
