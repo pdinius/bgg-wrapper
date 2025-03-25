@@ -27,7 +27,11 @@ export {
   CompleteDataCollectionResponse,
   CompleteDataCollectionItemInformation,
 } from "./types/collection";
-export { ThingResponse, ThingInformation } from "./types/thing";
+export {
+  ThingResponse,
+  ThingInformation,
+  TruncatedThingInformation,
+} from "./types/thing";
 export { UserResponse } from "./types/user";
 
 export default class BGG {
