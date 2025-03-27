@@ -148,6 +148,7 @@ export interface CompleteDataCollectionItemInformation
   categories: LinkInformation[];
   mechanics: LinkInformation[];
   families: LinkInformation[];
+  expands: LinkInformation[];
   expansions: LinkInformation[];
   accessories: LinkInformation[];
   reimplements: LinkInformation[];
