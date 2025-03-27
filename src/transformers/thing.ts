@@ -309,11 +309,22 @@ export const TruncatedThingTransformer = (
       minPlayTime: item.minPlayTime,
       maxPlayTime: item.maxPlayTime,
       bestWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
-        (a: { pc: number; v: number }, [pc, { best }]) => {
-          return a.v > best ? a : { pc: Number(pc), v: best };
+        (a: number[], [pc, votes]) => {
+          return votes.best > votes.notRecommended &&
+            votes.best > votes.recommended
+            ? [...a, Number(pc)]
+            : a;
         },
-        { pc: -1, v: -Infinity }
-      ).pc,
+        []
+      ),
+      recommendedWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
+        (a: number[], [pc, votes]) => {
+          return votes.recommended + votes.best > votes.notRecommended
+            ? [...a, Number(pc)]
+            : a;
+        },
+        []
+      ),
       suggestedPlayerAge: Object.entries(item.suggestedPlayerAgePoll).reduce(
         (a: { age: number; v: number }, [age, v]) => {
           return a.v > v ? a : { age: Number(age), v };

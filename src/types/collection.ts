@@ -131,7 +131,8 @@ export interface CollectionItemInformation {
 
 export interface CompleteStatistics extends Omit<CollectionStatistics, "ranks"> {
   rating: number;
-  bestWith: number;
+  bestWith: number[];
+  recommendedWith: number[];
   suggestedPlayerAge: number;
   languageDependence: string;
   rank: number;
