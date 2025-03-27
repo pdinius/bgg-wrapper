@@ -189,7 +189,8 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
     categories: link.reduce(linkReducer("boardgamecategory"), []),
     mechanics: link.reduce(linkReducer("boardgamemechanic"), []),
     families: link.reduce(linkReducer("boardgamefamily"), []),
-    expansions: link.reduce(linkReducer("boardgameexpansion"), []),
+    expands: link.reduce(linkReducer("boardgameexpansion", true), []),
+    expansions: link.reduce(linkReducer("boardgameexpansion", false), []),
     accessories: link.reduce(linkReducer("boardgameaccessory"), []),
     reimplements: link.reduce(linkReducer("boardgameimplementation", true), []),
     reimplementedBy: link.reduce(
