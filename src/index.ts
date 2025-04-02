@@ -218,3 +218,82 @@ export default class BGG {
     return UserTransformer(response);
   }
 }
+
+const bgg = new BGG();
+bgg.thing(295945, { stats: true }).then((c) => {
+  return c.items.map(
+    ({
+      id,
+      type,
+      name,
+      image,
+      thumbnail,
+      yearPublished,
+      minPlayers,
+      maxPlayers,
+      minPlayTime,
+      maxPlayTime,
+      suggestedNumPlayersPoll,
+      languageDependencePoll,
+      expands,
+      expansions,
+      designers,
+      publishers,
+      artists,
+      categories,
+      mechanics,
+      families,
+      reimplements,
+      reimplementedBy,
+      statistics,
+    }) => {
+      return {
+        retrievedOn: new Date(),
+        _id: id,
+        type,
+        name,
+        image,
+        thumbnail,
+        yearPublished,
+        minPlayers,
+        maxPlayers,
+        minPlayTime,
+        maxPlayTime,
+        bestWith: Object.entries(suggestedNumPlayersPoll).reduce(
+          (a: number[], [playerCount, { best, recommended, notRecommended }]) =>
+            best > recommended && best > notRecommended
+              ? [...a, +playerCount]
+              : a,
+          []
+        ),
+        recommendedWith: Object.entries(suggestedNumPlayersPoll).reduce(
+          (a: number[], [playerCount, { best, recommended, notRecommended }]) =>
+            best + recommended > notRecommended ? [...a, +playerCount] : a,
+          []
+        ),
+        languageDependence: languageDependencePoll.reduce((a, b) =>
+          a.votes > b.votes ? a : b
+        ).value,
+        expands: expands.map((e) => e.id),
+        expansions: expansions.map((e) => e.id),
+        designers: designers.map((e) => e.id),
+        publishers: publishers.map((e) => e.id),
+        artists: artists.map((e) => e.id),
+        categories: categories.map((e) => e.id),
+        mechanics: mechanics.map((e) => e.id),
+        families: families.map((e) => e.id),
+        reimplements: reimplements.map((e) => e.id),
+        reimplementedBy: reimplementedBy.map((e) => e.id),
+        usersRated: statistics?.usersRated,
+        averageRating: statistics?.averageRating,
+        geekRating: statistics?.geekRating,
+        rank: statistics?.ranks?.find((r) => r.id === 1)?.rank,
+        numOwned: statistics?.owned,
+        numTrading: statistics?.trading,
+        numWantInTrade: statistics?.wanting,
+        numWishing: statistics?.wishing,
+        weight: statistics?.weight,
+      };
+    }
+  );
+}).then(console.log);
