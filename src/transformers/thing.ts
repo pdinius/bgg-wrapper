@@ -129,133 +129,159 @@ const versionMapper = (v: RawVersion) => {
   };
 };
 
-export const RawItemTransformer = (raw: RawItem): ThingInformation => {
-  const {
-    $,
-    thumbnail,
-    image,
-    name,
-    description,
-    yearpublished,
-    minplayers,
-    maxplayers,
-    poll: [suggested_numplayers, suggested_playerage, language_dependence],
-    "poll-summary": suggested_numplayers_results,
-    playingtime,
-    minplaytime,
-    maxplaytime,
-    minage,
-    link,
-  } = raw;
-
-  const res: ThingInformation = {
-    id: $.id,
-    type: $.type,
-    name: decodeEntities(
-      invariantArray(name).find((n) => n.type === "primary")?.value || ""
-    ),
-    alternateNames: invariantArray(name)
-      .filter((n) => n.type !== "primary")
-      .map((n) => decodeEntities(n.value)),
-    image,
-    thumbnail,
-    description: decodeEntities(description),
-    yearPublished: yearpublished.value,
-    minPlayers: minplayers.value,
-    maxPlayers: maxplayers.value,
-    playingTime: playingtime.value,
-    minPlayTime: minplaytime.value,
-    maxPlayTime: maxplaytime.value,
-    minAge: minage.value,
-    bestWith: (suggested_numplayers_results.result[0].value?.match(/\d\S+/) || [
-      "",
-    ])[0].replace(/\D+/, "-"),
-    recommendedWith: (suggested_numplayers_results.result[1].value.match(
-      /\d\S+/
-    ) || [""])[0].replace(/\D+/, "-"),
-    suggestedNumPlayersPoll: invariantArray(
-      suggested_numplayers.results
-    ).reduce(suggestedPlayersReducer, {}),
-    suggestedPlayerAgePoll:
-      suggested_playerage.results?.result.reduce(
-        suggestedPlayerAgeReducer,
-        {}
-      ) || BLANK_PLAYER_AGE_POLL,
-    languageDependencePoll:
-      language_dependence.results?.result.reduce(
-        languageDependenceReducer,
-        []
-      ) || BLANK_LANGUAGE_DEPENDENCE_POLL,
-    categories: link.reduce(linkReducer("boardgamecategory"), []),
-    mechanics: link.reduce(linkReducer("boardgamemechanic"), []),
-    families: link.reduce(linkReducer("boardgamefamily"), []),
-    expands: link.reduce(linkReducer("boardgameexpansion", true), []),
-    expansions: link.reduce(linkReducer("boardgameexpansion", false), []),
-    accessories: link.reduce(linkReducer("boardgameaccessory"), []),
-    reimplements: link.reduce(linkReducer("boardgameimplementation", true), []),
-    reimplementedBy: link.reduce(
-      linkReducer("boardgameimplementation", false),
-      []
-    ),
-    designers: link.reduce(linkReducer("boardgamedesigner"), []),
-    artists: link.reduce(linkReducer("boardgameartist"), []),
-    publishers: link.reduce(linkReducer("boardgamepublisher"), []),
-  };
-
-  if (raw.statistics !== undefined) {
-    const {
-      statistics: {
-        ratings: {
-          usersrated,
-          average,
-          bayesaverage,
-          ranks: { rank },
-          owned,
-          trading,
-          wanting,
-          wishing,
-          numcomments,
-          numweights,
-          averageweight,
-        },
-      },
+export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
+  try {
+    let {
+      $,
+      thumbnail,
+      image,
+      name,
+      description,
+      yearpublished,
+      minplayers,
+      maxplayers,
+      poll: [suggested_numplayers, suggested_playerage, language_dependence],
+      "poll-summary": suggested_numplayers_results,
+      playingtime,
+      minplaytime,
+      maxplaytime,
+      minage,
+      link,
     } = raw;
 
-    res.statistics = {
-      usersRated: usersrated.value,
-      averageRating: average.value,
-      geekRating: bayesaverage.value,
-      ranks: rank
-        ? invariantArray(rank).map((r) => ({
-            id: r.id,
-            category: r.name,
-            label: r.friendlyname,
-            rank: r.value,
-          }))
-        : null,
-      owned: owned.value,
-      trading: trading.value,
-      wanting: wanting.value,
-      wishing: wishing.value,
-      numComments: numcomments.value,
-      numWeights: numweights.value,
-      weight: averageweight.value,
+    link = Array.isArray(link) ? link : [link];
+    suggested_numplayers_results.result = Array.isArray(
+      suggested_numplayers_results.result
+    )
+      ? suggested_numplayers_results.result
+      : [suggested_numplayers_results.result];
+    const suggestedPlayers = Array.isArray(suggested_playerage.results?.result)
+      ? suggested_playerage.results?.result
+      : suggested_playerage.results?.result && [
+          suggested_playerage.results?.result,
+        ];
+
+    const res: ThingInformation = {
+      id: $.id,
+      type: $.type,
+      name: decodeEntities(
+        invariantArray(name).find((n) => n.type === "primary")?.value || ""
+      ),
+      alternateNames: invariantArray(name)
+        .filter((n) => n.type !== "primary")
+        .map((n) => decodeEntities(n.value)),
+      image,
+      thumbnail,
+      description: decodeEntities(description),
+      yearPublished: yearpublished.value,
+      minPlayers: minplayers.value,
+      maxPlayers: maxplayers.value,
+      playingTime: playingtime.value,
+      minPlayTime: minplaytime.value,
+      maxPlayTime: maxplaytime.value,
+      minAge: minage.value,
+      bestWith: (suggested_numplayers_results.result[0].value?.match(
+        /\d\S+/
+      ) || [""])[0].replace(/\D+/, "-"),
+      recommendedWith: (suggested_numplayers_results.result[1].value.match(
+        /\d\S+/
+      ) || [""])[0].replace(/\D+/, "-"),
+      suggestedNumPlayersPoll: invariantArray(
+        suggested_numplayers.results
+      ).reduce(suggestedPlayersReducer, {}),
+      suggestedPlayerAgePoll:
+        suggestedPlayers?.reduce(suggestedPlayerAgeReducer, {}) ||
+        BLANK_PLAYER_AGE_POLL,
+      languageDependencePoll:
+        language_dependence.results?.result.reduce(
+          languageDependenceReducer,
+          []
+        ) || BLANK_LANGUAGE_DEPENDENCE_POLL,
+      categories: link.reduce(linkReducer("boardgamecategory"), []),
+      mechanics: link.reduce(linkReducer("boardgamemechanic"), []),
+      families: link.reduce(linkReducer("boardgamefamily"), []),
+      expands: link.reduce(linkReducer("boardgameexpansion", true), []),
+      expansions: link.reduce(linkReducer("boardgameexpansion", false), []),
+      accessories: link.reduce(linkReducer("boardgameaccessory"), []),
+      reimplements: link.reduce(
+        linkReducer("boardgameimplementation", true),
+        []
+      ),
+      reimplementedBy: link.reduce(
+        linkReducer("boardgameimplementation", false),
+        []
+      ),
+      designers: link.reduce(linkReducer("boardgamedesigner"), []),
+      artists: link.reduce(linkReducer("boardgameartist"), []),
+      publishers: link.reduce(linkReducer("boardgamepublisher"), []),
     };
-  }
 
-  if (raw.versions !== undefined) {
-    const { item } = raw.versions;
-    res.versions = item.map(versionMapper);
-  }
+    if (raw.statistics !== undefined) {
+      const {
+        statistics: {
+          ratings: {
+            usersrated,
+            average,
+            bayesaverage,
+            ranks: { rank },
+            owned,
+            trading,
+            wanting,
+            wishing,
+            numcomments,
+            numweights,
+            averageweight,
+          },
+        },
+      } = raw;
 
-  if (raw.videos !== undefined) {
-    const {
-      $: { total },
-      video,
-    } = raw.videos;
-  }
+      res.statistics = {
+        usersRated: usersrated.value,
+        averageRating: average.value,
+        geekRating: bayesaverage.value,
+        ranks: rank
+          ? invariantArray(rank).map((r) => ({
+              id: r.id,
+              category: r.name,
+              label: r.friendlyname,
+              rank: r.value,
+            }))
+          : null,
+        owned: owned.value,
+        trading: trading.value,
+        wanting: wanting.value,
+        wishing: wishing.value,
+        numComments: numcomments.value,
+        numWeights: numweights.value,
+        weight: averageweight.value,
+      };
+    }
 
-  return res;
+    if (raw.versions !== undefined) {
+      let { item } = raw.versions;
+      item = Array.isArray(item) ? item : [item];
+      res.versions = item.map(versionMapper);
+    }
+
+    if (raw.videos !== undefined) {
+      const {
+        $: { total },
+        video,
+      } = raw.videos;
+    }
+
+    return res;
+  } catch (e) {
+    console.log(e);
+    console.log(
+      `Failed to save data for ${raw.$.id} - ${
+        Array.isArray(raw.name)
+          ? raw.name.find((n) => n.type === "primary")?.value
+          : raw.name.value
+      }`
+    );
+    return null;
+  }
 };
 
 export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
@@ -267,8 +293,8 @@ export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
   return {
     termsOfUse,
     items: Array.isArray(item)
-      ? item.map(RawItemTransformer)
-      : [item].map(RawItemTransformer),
+      ? item.map(RawItemTransformer).filter((v) => v !== null)
+      : [item].map(RawItemTransformer).filter((v) => v !== null),
   };
 };
 

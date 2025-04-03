@@ -1,5 +1,5 @@
 import { cleanString, generateURI, pause } from "./shared/utils";
-import { XMLAPI, XMLAPI2, MAX_RETRIES } from "./shared/constants";
+import { XMLAPI, XMLAPI2 } from "./shared/constants";
 import {
   RawThingResponse,
   ThingInformation,
@@ -17,7 +17,6 @@ import {
   RawCollectionResponse,
 } from "./types/collection";
 import { CollectionTransformer } from "./transformers/collection";
-import { AlternateResponse, AlternateResult } from "./types/general";
 import { RawUserResponse } from "./types/user";
 import { UserTransformer } from "./transformers/user";
 
@@ -37,7 +36,6 @@ export { UserResponse } from "./types/user";
 export default class BGG {
   private signal: AbortSignal | undefined;
   private progressEmitter = new EventTarget();
-  private retries = 0;
 
   constructor(
     props?: Partial<{
@@ -74,40 +72,21 @@ export default class BGG {
   private fetchFromBgg = async <T extends object>(uri: string): Promise<T> => {
     const data = await fetch(uri, { signal: this.signal });
     const text = await data.text();
-    const json: T | AlternateResponse = xmlToJson(text);
+    const json: T = xmlToJson(text);
 
-    if ("message" in json) {
-      throw {
-        status: data.status,
-        message: cleanString(json.message),
-      };
-    } else if ("errors" in json) {
-      throw {
-        status: data.status,
-        message: cleanString(json.errors.error.message),
-      };
-    } else if (data.status === 200) {
+    if (data.status === 200) {
       return json as T;
     } else {
       throw {
         status: data.status,
-        message: `Request failed with status ${data.status}.`,
+        message: `Request completed with status ${data.status}.`,
+        details:
+          data.status === 202
+            ? "BGG is fetching your data, retry your request in 5~10 seconds."
+            : data.status === 429
+            ? "Too many requests. Please wait."
+            : undefined,
       };
-    }
-  };
-
-  private handleError = (e: AlternateResult) => {
-    if (
-      "status" in e &&
-      ++this.retries < MAX_RETRIES &&
-      [202, 429].includes(e.status)
-    ) {
-      return;
-    }
-    if (this.retries >= MAX_RETRIES) {
-      throw Error("Reached maximum retries");
-    } else {
-      throw e;
     }
   };
 
@@ -115,7 +94,6 @@ export default class BGG {
     id: string | number | Array<string | number>,
     options?: Partial<ThingOptions>
   ) {
-    this.retries = 0;
     const chunks: (string | number)[] = [];
 
     if (Array.isArray(id)) {
@@ -167,10 +145,10 @@ export default class BGG {
           new CustomEvent("percent", { detail: i / uris.length })
         );
         if (i < uris.length - 1) {
-          await pause(0.5);
+          await pause(2);
         }
       } catch (e) {
-        this.handleError(e as AlternateResult);
+        console.log(e);
         console.log("pausing for 5 seconds");
         await pause(5);
         --i;
@@ -195,7 +173,6 @@ export default class BGG {
     username: string,
     options?: Partial<CollectionOptions>
   ): Promise<CollectionResponse> {
-    this.retries = 0;
     const uri = generateURI(XMLAPI2, "collection", {
       username,
       ...options,
@@ -205,95 +182,14 @@ export default class BGG {
       const response = await this.fetchFromBgg<RawCollectionResponse>(uri);
       return CollectionTransformer(response);
     } catch (e) {
-      this.handleError(e as AlternateResult);
       await pause(5);
       return this.collection(username, options);
     }
   }
 
   async user(username: string) {
-    this.retries = 0;
     const uri = generateURI(XMLAPI2, "user", { name: username });
     const response = await this.fetchFromBgg<RawUserResponse>(uri);
     return UserTransformer(response);
   }
 }
-
-const bgg = new BGG();
-bgg.thing(295945, { stats: true }).then((c) => {
-  return c.items.map(
-    ({
-      id,
-      type,
-      name,
-      image,
-      thumbnail,
-      yearPublished,
-      minPlayers,
-      maxPlayers,
-      minPlayTime,
-      maxPlayTime,
-      suggestedNumPlayersPoll,
-      languageDependencePoll,
-      expands,
-      expansions,
-      designers,
-      publishers,
-      artists,
-      categories,
-      mechanics,
-      families,
-      reimplements,
-      reimplementedBy,
-      statistics,
-    }) => {
-      return {
-        retrievedOn: new Date(),
-        _id: id,
-        type,
-        name,
-        image,
-        thumbnail,
-        yearPublished,
-        minPlayers,
-        maxPlayers,
-        minPlayTime,
-        maxPlayTime,
-        bestWith: Object.entries(suggestedNumPlayersPoll).reduce(
-          (a: number[], [playerCount, { best, recommended, notRecommended }]) =>
-            best > recommended && best > notRecommended
-              ? [...a, +playerCount]
-              : a,
-          []
-        ),
-        recommendedWith: Object.entries(suggestedNumPlayersPoll).reduce(
-          (a: number[], [playerCount, { best, recommended, notRecommended }]) =>
-            best + recommended > notRecommended ? [...a, +playerCount] : a,
-          []
-        ),
-        languageDependence: languageDependencePoll.reduce((a, b) =>
-          a.votes > b.votes ? a : b
-        ).value,
-        expands: expands.map((e) => e.id),
-        expansions: expansions.map((e) => e.id),
-        designers: designers.map((e) => e.id),
-        publishers: publishers.map((e) => e.id),
-        artists: artists.map((e) => e.id),
-        categories: categories.map((e) => e.id),
-        mechanics: mechanics.map((e) => e.id),
-        families: families.map((e) => e.id),
-        reimplements: reimplements.map((e) => e.id),
-        reimplementedBy: reimplementedBy.map((e) => e.id),
-        usersRated: statistics?.usersRated,
-        averageRating: statistics?.averageRating,
-        geekRating: statistics?.geekRating,
-        rank: statistics?.ranks?.find((r) => r.id === 1)?.rank,
-        numOwned: statistics?.owned,
-        numTrading: statistics?.trading,
-        numWantInTrade: statistics?.wanting,
-        numWishing: statistics?.wishing,
-        weight: statistics?.weight,
-      };
-    }
-  );
-}).then(console.log);

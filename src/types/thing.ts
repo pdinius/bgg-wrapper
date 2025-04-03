@@ -79,7 +79,7 @@ export interface RawComments {
     page: number;
     totalitems: number;
   };
-  comment: RawComment[];
+  comment: RawComment | RawComment[];
 }
 
 export interface RawListing {
@@ -103,7 +103,7 @@ export interface RawListing {
 }
 
 export interface RawMarketplaceInformation {
-  listing: RawListing[];
+  listing: RawListing | RawListing[];
 }
 
 export interface RawVideoInformation {
@@ -124,7 +124,7 @@ export interface RawVersion {
   };
   thumbnail: string;
   image: string;
-  link: RawLink[];
+  link: RawLink | RawLink[];
   name: RawThingName;
   yearpublished: {
     value: number;
@@ -209,7 +209,7 @@ export interface RawItem {
   };
   thumbnail: string;
   image: string;
-  name: RawThingName[];
+  name: RawThingName | RawThingName[];
   description: string;
   yearpublished: {
     value: number;
@@ -227,7 +227,7 @@ export interface RawItem {
         title: "User Suggested Number of Players";
         totalvotes: number;
       };
-      results: RawSuggestedPlayersPollResult[];
+      results: RawSuggestedPlayersPollResult | RawSuggestedPlayersPollResult[];
     },
     {
       $: {
@@ -235,8 +235,10 @@ export interface RawItem {
         title: "User Suggested Player Age";
         totalvotes: number;
       };
-      results: {
-        result: RawSuggestedPlayerAgePollResult[];
+      results?: {
+        result:
+          | RawSuggestedPlayerAgePollResult
+          | RawSuggestedPlayerAgePollResult[];
       };
     },
     {
@@ -255,10 +257,15 @@ export interface RawItem {
       name: "suggested_numplayers";
       title: "User Suggested Number of Players";
     };
-    result: {
-      name: "bestwith" | "recommmendedwith";
-      value: string;
-    }[];
+    result:
+      | {
+          name: "bestwith" | "recommmendedwith";
+          value: string;
+        }
+      | {
+          name: "bestwith" | "recommmendedwith";
+          value: string;
+        }[];
   };
   playingtime: {
     value: number;
@@ -272,17 +279,17 @@ export interface RawItem {
   minage: {
     value: number;
   };
-  link: RawLink[];
+  link: RawLink | RawLink[];
   comments?: RawComments;
   marketplacelistings?: RawMarketplaceInformation;
   versions?: {
-    item: RawVersion[];
+    item: RawVersion | RawVersion[];
   };
   videos?: {
     $: {
       total: number;
     };
-    video: RawVideoInformation[];
+    video: RawVideoInformation | RawVideoInformation[];
   };
   statistics?: RawStatistics;
 }

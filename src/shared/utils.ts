@@ -39,6 +39,7 @@ export const invariant = <T>(el: T | null | undefined, msg: string): T => {
 };
 
 export const decodeEntities = (encodedString: string) => {
+  if (typeof encodedString !== "string") return encodedString;
   const translate_re = /&(nbsp|amp|quot|lt|gt);/g;
   const translate = {
     nbsp: " ",
