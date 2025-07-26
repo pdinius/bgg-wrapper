@@ -214,6 +214,8 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
       designers: link.reduce(linkReducer("boardgamedesigner"), []),
       artists: link.reduce(linkReducer("boardgameartist"), []),
       publishers: link.reduce(linkReducer("boardgamepublisher"), []),
+      contains: link.reduce(linkReducer("boardgamecompilation", true), []),
+      containedIn: link.reduce(linkReducer("boardgamecompilation", false), []),
     };
 
     if (raw.statistics !== undefined) {
@@ -263,12 +265,12 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
       res.versions = item.map(versionMapper);
     }
 
-    if (raw.videos !== undefined) {
-      const {
-        $: { total },
-        video,
-      } = raw.videos;
-    }
+    // if (raw.videos !== undefined) {
+    //   const {
+    //     $: { total },
+    //     video,
+    //   } = raw.videos;
+    // }
 
     return res;
   } catch (e) {
@@ -319,6 +321,7 @@ export const TruncatedThingTransformer = (
     artists,
     publishers,
   } = item;
+
   return {
     id: item.id,
     name: item.name,

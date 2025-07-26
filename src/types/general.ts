@@ -23,7 +23,8 @@ export type LinkType =
   | "boardgameimplementation"
   | "boardgamedesigner"
   | "boardgameartist"
-  | "boardgamepublisher";
+  | "boardgamepublisher"
+  | "boardgamecompilation";
 
 export interface AlternateResult {
   status: number;
