@@ -1,5 +1,5 @@
-
-const stringToVal = (s: string) => (isNaN(Number(s)) ? s : Number(s));
+const NUMBER_REGEX = /^-?\d+(?:\.\d+)?$/;
+const stringToVal = (s: string) => (NUMBER_REGEX.test(s) ? parseFloat(s) : s);
 
 const propsToJson = (s: string) => {
   if (!s.trim()) return undefined;
@@ -8,7 +8,7 @@ const propsToJson = (s: string) => {
 
   for (const p of props) {
     const [key, val] = p.split(/=(?=")/);
-    res[key] = stringToVal(val.slice(1, -1));
+    res[key] = stringToVal(val.slice(1, -1).trim());
   }
 
   return res;

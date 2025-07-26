@@ -390,6 +390,8 @@ export interface ThingInformation {
   designers: LinkInformation[];
   artists: LinkInformation[];
   publishers: LinkInformation[];
+  contains: LinkInformation[];
+  containedIn: LinkInformation[];
   statistics?: Statistics;
   versions?: Version[];
 }
