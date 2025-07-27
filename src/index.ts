@@ -1,5 +1,5 @@
 import { cleanString, generateURI, pause } from "./shared/utils";
-import { XMLAPI, XMLAPI2 } from "./shared/constants";
+import { TERMS_OF_USE, XMLAPI, XMLAPI2 } from "./shared/constants";
 import {
   RawThingResponse,
   ThingInformation,
@@ -93,7 +93,13 @@ export default class BGG {
   async thing(
     id: string | number | Array<string | number>,
     options?: Partial<ThingOptions>
-  ) {
+  ): Promise<ThingResponse> {
+    if (Array.isArray(id) && id.length === 0) {
+      return {
+        termsOfUse: TERMS_OF_USE,
+        items: [],
+      };
+    }
     const chunks: (string | number)[] = [];
 
     if (Array.isArray(id)) {
