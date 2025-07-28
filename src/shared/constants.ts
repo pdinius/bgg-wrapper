@@ -8,3 +8,4 @@ export const LANGUAGE_DEPENDENCE_LABELS = [
   "Unplayable in another language",
 ] as const;
 export const MAX_RETRIES = 20;
+export const TERMS_OF_USE = "https://boardgamegeek.com/xmlapi/termsofuse";
