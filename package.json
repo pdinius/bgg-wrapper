@@ -16,6 +16,6 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@phildinius/xml-to-json": "^1.0.0"
+    "@phildinius/xml-to-json": "^1.0.1"
   }
 }
