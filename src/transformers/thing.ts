@@ -13,7 +13,6 @@ import {
   RawVersion,
   SuggestedPlayerVotes,
   ThingResponse,
-  TruncatedThingInformation,
 } from "../types/thing";
 
 const BLANK_PLAYER_AGE_POLL = {
@@ -129,6 +128,26 @@ const versionMapper = (v: RawVersion) => {
   };
 };
 
+const getRecommendedOrBest = (
+  result: {
+    name: "bestwith" | "recommmendedwith";
+    value: string;
+  }[],
+  which: number
+) => {
+  return (result[which].value?.match(/\d.+(?= players)/) || [""])[0]
+    .split(", ")
+    .flatMap((s) => {
+      s = s.replace(/\D/g, "-");
+      if (s.includes("-")) {
+        const [a, b] = s.split("-").map((v) => parseInt(v));
+        return Array.from({ length: b - a + 1 }, (_, i) => i + a);
+      } else {
+        return parseInt(s);
+      }
+    });
+};
+
 export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
   try {
     let {
@@ -180,12 +199,11 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
       minPlayTime: minplaytime.value,
       maxPlayTime: maxplaytime.value,
       minAge: minage.value,
-      bestWith: (suggested_numplayers_results.result[0].value?.match(
-        /\d\S+/
-      ) || [""])[0].replace(/\D+/, "-"),
-      recommendedWith: (suggested_numplayers_results.result[1].value.match(
-        /\d\S+/
-      ) || [""])[0].replace(/\D+/, "-"),
+      bestWith: getRecommendedOrBest(suggested_numplayers_results.result, 0),
+      recommendedWith: getRecommendedOrBest(
+        suggested_numplayers_results.result,
+        1
+      ),
       suggestedNumPlayersPoll: invariantArray(
         suggested_numplayers.results
       ).reduce(suggestedPlayersReducer, {}),
@@ -297,92 +315,5 @@ export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
     items: Array.isArray(item)
       ? item.map(RawItemTransformer).filter((v) => v !== null)
       : [item].map(RawItemTransformer).filter((v) => v !== null),
-  };
-};
-
-export const TruncatedThingTransformer = (
-  item: ThingInformation
-): TruncatedThingInformation => {
-  const statistics = invariant(
-    item.statistics,
-    "Cannot transform item to complete data collection item without statistics object."
-  );
-
-  const {
-    categories,
-    mechanics,
-    families,
-    expands,
-    expansions,
-    accessories,
-    reimplements,
-    reimplementedBy,
-    designers,
-    artists,
-    publishers,
-  } = item;
-
-  return {
-    id: item.id,
-    name: item.name,
-    type: item.type,
-    image: item.image,
-    thumbnail: item.thumbnail,
-    yearPublished: item.yearPublished,
-    statistics: {
-      owned: statistics.owned,
-      usersRated: statistics.usersRated,
-      averageRating: statistics.averageRating,
-      geekRating: statistics.geekRating,
-      minPlayers: item.minPlayers,
-      maxPlayers: item.maxPlayers,
-      minPlayTime: item.minPlayTime,
-      maxPlayTime: item.maxPlayTime,
-      bestWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
-        (a: number[], [pc, votes]) => {
-          return votes.best > votes.notRecommended &&
-            votes.best > votes.recommended
-            ? [...a, Number(pc)]
-            : a;
-        },
-        []
-      ),
-      recommendedWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
-        (a: number[], [pc, votes]) => {
-          return votes.recommended + votes.best > votes.notRecommended
-            ? [...a, Number(pc)]
-            : a;
-        },
-        []
-      ),
-      suggestedPlayerAge: Object.entries(item.suggestedPlayerAgePoll).reduce(
-        (a: { age: number; v: number }, [age, v]) => {
-          return a.v > v ? a : { age: Number(age), v };
-        },
-        { age: -1, v: -Infinity }
-      ).age,
-      languageDependence: item.languageDependencePoll.reduce(
-        (a: { value: string; votes: number }, b) => {
-          return a.votes > b.votes ? a : b;
-        },
-        { value: "", votes: -Infinity }
-      ).value,
-      rank: item.statistics?.ranks?.find((r) => r.id === 1)?.rank || -1,
-      trading: item.statistics?.trading || -1,
-      wanting: item.statistics?.wanting || -1,
-      wishing: item.statistics?.wishing || -1,
-      weight: item.statistics?.weight || -1,
-    },
-    categories,
-    mechanics,
-    families,
-    expands,
-    expansions,
-    accessories,
-    reimplements,
-    reimplementedBy,
-    designers,
-    artists,
-    publishers,
   };
 };

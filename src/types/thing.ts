@@ -19,7 +19,6 @@ export interface ThingOptions {
   comments: boolean;
   ratings: boolean;
   page: number;
-  truncated: boolean;
 }
 
 // Raw Response
@@ -370,8 +369,8 @@ export interface ThingInformation {
   minPlayTime: number;
   maxPlayTime: number;
   minAge: number;
-  bestWith: string;
-  recommendedWith: string;
+  bestWith: number[];
+  recommendedWith: number[];
   suggestedNumPlayersPoll: {
     [key: number]: SuggestedPlayerVotes;
   };
@@ -399,13 +398,4 @@ export interface ThingInformation {
 export interface ThingResponse {
   termsOfUse: string;
   items: ThingInformation[];
-}
-
-export interface TruncatedThingInformation
-  extends Omit<
-    CompleteDataCollectionItemInformation,
-    "statistics" | "numPlays" | "status"
-  > {
-  type: ThingType;
-  statistics: Omit<CompleteStatistics, "rating">;
 }

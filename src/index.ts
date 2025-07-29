@@ -6,10 +6,7 @@ import {
   ThingOptions,
   ThingResponse,
 } from "./types/thing";
-import {
-  ThingTransformer,
-  TruncatedThingTransformer,
-} from "./transformers/thing";
+import { ThingTransformer } from "./transformers/thing";
 import {
   CollectionOptions,
   CollectionResponse,
@@ -26,11 +23,7 @@ export {
   CompleteDataCollectionResponse,
   CompleteDataCollectionItemInformation,
 } from "./types/collection";
-export {
-  ThingResponse,
-  ThingInformation,
-  TruncatedThingInformation,
-} from "./types/thing";
+export { ThingResponse, ThingInformation } from "./types/thing";
 export { UserResponse } from "./types/user";
 
 export default class BGG {
@@ -115,12 +108,6 @@ export default class BGG {
       ratingcomments = true;
     }
 
-    let truncated = false;
-    if (options && "truncated" in options) {
-      truncated = true;
-      delete options.truncated;
-    }
-
     const uris = chunks.map((id) =>
       generateURI(XMLAPI2, "thing", {
         id,
@@ -142,9 +129,7 @@ export default class BGG {
         results.items.push(...partial.items);
         this.progressEmitter.dispatchEvent(
           new CustomEvent("progress", {
-            detail: truncated
-              ? partial.items.map(TruncatedThingTransformer)
-              : partial.items,
+            detail: partial.items,
           })
         );
         this.progressEmitter.dispatchEvent(
@@ -165,14 +150,6 @@ export default class BGG {
       new CustomEvent("percent", { detail: 1 })
     );
     return results;
-  }
-
-  async truncatedThing(id: string | number | Array<string | number>) {
-    const thingResponse = await this.thing(id, {
-      stats: true,
-      truncated: true,
-    });
-    return thingResponse.items.map(TruncatedThingTransformer);
   }
 
   async collection(
