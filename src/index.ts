@@ -1,4 +1,4 @@
-import { cleanString, generateURI, pause } from "./shared/utils";
+import { generateURI, pause } from "./shared/utils";
 import { TERMS_OF_USE, XMLAPI, XMLAPI2 } from "./shared/constants";
 import {
   RawThingResponse,
@@ -10,7 +10,6 @@ import {
   ThingTransformer,
   TruncatedThingTransformer,
 } from "./transformers/thing";
-import xmlToJson from "./shared/xmlToJson";
 import {
   CollectionOptions,
   CollectionResponse,
@@ -19,6 +18,7 @@ import {
 import { CollectionTransformer } from "./transformers/collection";
 import { RawUserResponse } from "./types/user";
 import { UserTransformer } from "./transformers/user";
+import xmlToJson from "@phildinius/xml-to-json";
 
 export {
   CollectionResponse,

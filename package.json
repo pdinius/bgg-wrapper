@@ -14,5 +14,8 @@
   "devDependencies": {
     "@types/node": "^24.0.13",
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@phildinius/xml-to-json": "^1.0.0"
   }
 }
