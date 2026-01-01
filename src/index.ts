@@ -29,16 +29,16 @@ export { UserResponse } from "./types/user";
 export default class BGG {
   private signal: AbortSignal | undefined;
   private progressEmitter = new EventTarget();
+  private authToken: string;
 
-  constructor(
-    props?: Partial<{
-      signal: AbortSignal;
-      progressListener: (items: ThingInformation[]) => void;
-      percentListener: (percent: number) => void;
-    }>
-  ) {
-    if (props === undefined) return;
-    const { signal, progressListener, percentListener } = props;
+  constructor(props: {
+    authToken: string;
+    signal?: AbortSignal;
+    progressListener?: (items: ThingInformation[]) => void;
+    percentListener?: (percent: number) => void;
+  }) {
+    const { authToken, signal, progressListener, percentListener } = props;
+    this.authToken = authToken;
     this.signal = signal;
     if (progressListener) {
       this.progressEmitter.addEventListener(
@@ -63,7 +63,10 @@ export default class BGG {
   }
 
   private fetchFromBgg = async <T extends object>(uri: string): Promise<T> => {
-    const data = await fetch(uri, { signal: this.signal });
+    const data = await fetch(uri, {
+      headers: { Authorization: "Bearer " + this.authToken },
+      signal: this.signal,
+    });
     const text = await data.text();
     const json: T = xmlToJson(text);
 

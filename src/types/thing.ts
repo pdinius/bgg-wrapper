@@ -377,6 +377,7 @@ export interface ThingInformation {
   suggestedPlayerAgePoll: {
     [key: number]: number;
   };
+  languageDependence: string;
   languageDependencePoll: LanguageDependenceVotes[];
   categories: LinkInformation[];
   mechanics: LinkInformation[];

@@ -5,3 +5,4 @@ yarn.lock
 *.gitattributes
 README.md
 tsconfig.json
+TODO.txt

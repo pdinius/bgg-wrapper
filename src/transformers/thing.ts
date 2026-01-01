@@ -180,6 +180,12 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
           suggested_playerage.results?.result,
         ];
 
+    const languageDependencePoll =
+      language_dependence.results?.result.reduce(
+        languageDependenceReducer,
+        []
+      ) || BLANK_LANGUAGE_DEPENDENCE_POLL;
+
     const res: ThingInformation = {
       id: $.id,
       type: $.type,
@@ -210,11 +216,11 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
       suggestedPlayerAgePoll:
         suggestedPlayers?.reduce(suggestedPlayerAgeReducer, {}) ||
         BLANK_PLAYER_AGE_POLL,
-      languageDependencePoll:
-        language_dependence.results?.result.reduce(
-          languageDependenceReducer,
-          []
-        ) || BLANK_LANGUAGE_DEPENDENCE_POLL,
+      languageDependence: languageDependencePoll.reduce(
+        (a, b) => (a.votes > b.votes ? a : b),
+        { value: "", votes: -Infinity }
+      ).value,
+      languageDependencePoll,
       categories: link.reduce(linkReducer("boardgamecategory"), []),
       mechanics: link.reduce(linkReducer("boardgamemechanic"), []),
       families: link.reduce(linkReducer("boardgamefamily"), []),
