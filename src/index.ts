@@ -144,7 +144,7 @@ export default class BGG {
       } catch (e) {
         console.log(e);
         console.log("pausing for 5 seconds");
-        await pause(5);
+        await pause(10);
         --i;
         continue;
       }
@@ -168,7 +168,7 @@ export default class BGG {
       const response = await this.fetchFromBgg<RawCollectionResponse>(uri);
       return CollectionTransformer(response);
     } catch (e) {
-      await pause(5);
+      await pause(10);
       return this.collection(username, options);
     }
   }
