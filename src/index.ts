@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { generateURI, pause } from "./shared/utils";
 import { TERMS_OF_USE, XMLAPI, XMLAPI2 } from "./shared/constants";
 import {
@@ -16,6 +17,8 @@ import { CollectionTransformer } from "./transformers/collection";
 import { RawUserResponse } from "./types/user";
 import { UserTransformer } from "./transformers/user";
 import xmlToJson from "@phildinius/xml-to-json";
+import { RawSearchResponse, SearchOptions, SearchResult } from "./types/search";
+import { searchTransformer } from "./transformers/search";
 
 export {
   CollectionResponse,
@@ -47,7 +50,7 @@ export default class BGG {
           if (e.detail) {
             progressListener(e.detail);
           }
-        }
+        },
       );
     }
     if (percentListener) {
@@ -57,7 +60,7 @@ export default class BGG {
           if (e.detail) {
             percentListener(e.detail);
           }
-        }
+        },
       );
     }
   }
@@ -80,15 +83,15 @@ export default class BGG {
           data.status === 202
             ? "BGG is fetching your data, retry your request in 5~10 seconds."
             : data.status === 429
-            ? "Too many requests. Please wait."
-            : undefined,
+              ? "Too many requests. Please wait."
+              : undefined,
       };
     }
   };
 
   async thing(
     id: string | number | Array<string | number>,
-    options?: Partial<ThingOptions>
+    options?: Partial<ThingOptions>,
   ): Promise<ThingResponse> {
     if (Array.isArray(id) && id.length === 0) {
       return {
@@ -116,7 +119,7 @@ export default class BGG {
         id,
         ratingcomments,
         ...options,
-      })
+      }),
     );
 
     const results: ThingResponse = {
@@ -133,10 +136,10 @@ export default class BGG {
         this.progressEmitter.dispatchEvent(
           new CustomEvent("progress", {
             detail: partial.items,
-          })
+          }),
         );
         this.progressEmitter.dispatchEvent(
-          new CustomEvent("percent", { detail: i / uris.length })
+          new CustomEvent("percent", { detail: i / uris.length }),
         );
         if (i < uris.length - 1) {
           await pause(2);
@@ -150,14 +153,14 @@ export default class BGG {
       }
     }
     this.progressEmitter.dispatchEvent(
-      new CustomEvent("percent", { detail: 1 })
+      new CustomEvent("percent", { detail: 1 }),
     );
     return results;
   }
 
   async collection(
     username: string,
-    options?: Partial<CollectionOptions>
+    options?: Partial<CollectionOptions>,
   ): Promise<CollectionResponse> {
     const uri = generateURI(XMLAPI2, "collection", {
       username,
@@ -178,4 +181,143 @@ export default class BGG {
     const response = await this.fetchFromBgg<RawUserResponse>(uri);
     return UserTransformer(response);
   }
+
+  async search(query: string, options?: Partial<SearchOptions>) {
+    const uri = generateURI(XMLAPI2, "search", { query, ...options });
+    const response = await this.fetchFromBgg<RawSearchResponse>(uri);
+    return searchTransformer(response);
+  }
 }
+
+const bgg = new BGG({ authToken: "29b96081-6360-4c07-8573-a2e3b5940b29" });
+
+const gamenames = [
+  "Ark Nova",
+  "Lost Ruins of Arnak",
+  "Wingspan",
+  "Scythe",
+  "Viticulture",
+  "Dune: Imperium",
+  "Everdell",
+  "Heat: Pedal to the Metal",
+  "Spirit Island",
+  "The Castles of Burgundy",
+  "SETI: Search for Extraterrestrial Intelligence",
+  "Brass: Birmingham",
+  "Earth",
+  "Cascadia",
+  "Concordia",
+  "Space Base",
+  "Quacks",
+  "A Feast for Odin",
+  "Gloomhaven",
+  "Cthulhu: Death May Die",
+  "Root",
+  "Dune: Imperium – Uprising",
+  "Ticket to Ride",
+  "Marvel United",
+  "Obsession",
+  "Galactic Cruise",
+  "Sky Team",
+  "Pandemic",
+  // "Ra",
+  "Clank!: Catacombs",
+  "The Crew: Mission Deep Sea",
+  "Five Tribes: The Djinns of Naqala", // ***
+  "Orléans", // ***
+  "Paladins of the West Kingdom",
+  "Carcassonne",
+  "7 Wonders Duel",
+  "Blood Rage",
+  "Marvel Champions: The Card Game",
+  "The Quest for El Dorado",
+  "The Lord of the Rings: Duel for Middle-earth",
+  "Slay the Spire: The Board Game",
+  "Final Girl",
+  "Forest Shuffle",
+  "Pandemic Legacy: Season 1",
+  "Underwater Cities",
+  "Grand Austria Hotel",
+  "Arkham Horror (Third Edition)",
+  "Star Wars: Rebellion",
+  "The White Castle",
+  "Meadow",
+  "Lords of Waterdeep",
+  "Raiders of the North Sea",
+  "Bomb Busters",
+  "Just One",
+  "Dominion",
+  "Great Western Trail",
+  "Anachrony",
+  "Planet Unknown",
+  "Harmonies",
+  "Endeavor: Deep Sea",
+  "Distilled",
+  "Twilight Imperium: Fourth Edition",
+  "The Lord of the Rings: Fate of the Fellowship",
+  "Thunder Road: Vendetta",
+  "Deliverance",
+  "Hegemony: Lead Your Class to Victory",
+  "Rising Sun",
+  "Cosmic Encounter",
+  "Aeon's End",
+  "Andromeda's Edge",
+  "Revive",
+  "Nemesis",
+  "Mansions of Madness: Second Edition",
+  "Beyond the Sun",
+  "Arcs",
+  "Frosthaven",
+  "The Fellowship of the Ring",
+  "Eclipse",
+  "Tapestry",
+  "Agricola",
+  "Sleeping Gods",
+  "Power Grid",
+  "Caverna: The Cave Farmers",
+  "Hansa Teutonica",
+  "7 Wonders",
+  "The Lord of the Rings: The Card Game",
+  "Azul",
+  "Race for the Galaxy",
+  "Deception: Murder in Hong Kong",
+  "Architects of the West Kingdom",
+  "Life of the Amazonia",
+  "Codenames",
+  "Castles of Mad King Ludwig",
+  "Gaia Project",
+  "Through the Ages: A New Story of Civilization",
+  "War of the Ring",
+  "The Vale of Eternity",
+  "Blood on the Clocktower",
+  "Vantage",
+];
+
+const fn = async () => {
+  const progress = JSON.parse(fs.readFileSync("./dice-tower-top-100.json", "utf-8")) as SearchResult[];
+
+  for (let i = 0; i < gamenames.length; ++i) {
+    const name = gamenames[i];
+    if (progress.some(v => v.name.toLowerCase() === name)) {
+      console.log(`Skipping ${name} ...`);
+      continue;
+    }
+    try {
+      const res = await bgg.search(name, { exact: true });
+      progress.push(res.items[0]);
+      console.log(`Found id: ${res.items[0].id}`);
+      if (res.items[0].yearPublished === 2014) {
+        console.log(res.items[0].name);
+      }
+      fs.writeFileSync("dice-tower-top-100.json", JSON.stringify(progress, null, 2));
+      await pause(0.5);
+    } catch (e) {
+      await pause(5);
+      --i;
+    }
+  }
+
+  console.log("complete");
+}
+
+fn();

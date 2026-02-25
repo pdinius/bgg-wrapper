@@ -1,8 +1,15 @@
-export type ThingType =
-  | "boardgame"
-  | "boardgameaccessory"
-  | "boardgameexpansion"
-  | "boardgameversion";
+const THING_TYPE = [
+  "boardgame",
+  "boardgameaccessory",
+  "boardgameexpansion",
+  "boardgameversion",
+] as const;
+
+export const isThingType = (s: string): s is ThingType => {
+  return THING_TYPE.includes(s as ThingType);
+};
+
+export type ThingType = (typeof THING_TYPE)[number];
 export type NameType = "primary" | "alternate";
 export interface IError {
   status: number;
