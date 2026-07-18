@@ -107,5 +107,9 @@
     "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
   },
   "include": ["./src"],
-  "exclude": []
+  "exclude": [
+    "./src/**/*.test.ts",
+    "./src/**/*.live.test.ts",
+    "./src/live.setup.ts"
+  ]
 }

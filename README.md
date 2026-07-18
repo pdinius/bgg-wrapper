@@ -80,3 +80,12 @@ try {
 ### Types
 
 Public response and options types are exported from the package root, including `ThingOptions`, `CollectionOptions`, `SearchOptions`, `ThingResponse`, `CollectionResponse`, `UserResponse`, and `SearchResponse`.
+
+## Development
+
+```bash
+npm test          # unit tests (mocked; no BGG network calls)
+npm run test:live # live API tests (requires .env)
+```
+
+Live tests load `.env` automatically and need an auth token as `AUTH_TOKEN` or `BGG_AUTH_TOKEN`. They are excluded from `npm test`.

@@ -104,7 +104,10 @@ export const CollectionTransformer = (
   return {
     termsOfUse,
     retrievalDate: new Date(pubdate),
-    items: invariantArray(item).map(RawCollectionTransformer),
+    items:
+      item === undefined
+        ? []
+        : invariantArray(item).map(RawCollectionTransformer),
   };
 };
 
