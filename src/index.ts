@@ -1,6 +1,12 @@
-import fs from "node:fs";
 import { generateURI, pause } from "./shared/utils";
-import { TERMS_OF_USE, XMLAPI, XMLAPI2 } from "./shared/constants";
+import {
+  CHUNK_DELAY,
+  MAX_RETRIES,
+  RETRY_DELAY_ACCEPTED,
+  RETRY_DELAY_RATE_LIMIT,
+  TERMS_OF_USE,
+  XMLAPI2,
+} from "./shared/constants";
 import {
   RawThingResponse,
   ThingInformation,
@@ -14,12 +20,18 @@ import {
   RawCollectionResponse,
 } from "./types/collection";
 import { CollectionTransformer } from "./transformers/collection";
-import { RawUserResponse } from "./types/user";
+import { RawUserResponse, UserResponse } from "./types/user";
 import { UserTransformer } from "./transformers/user";
 import xmlToJson from "@phildinius/xml-to-json";
-import { RawSearchResponse, SearchOptions, SearchResult } from "./types/search";
+import {
+  RawSearchResponse,
+  SearchOptions,
+  SearchResponse,
+} from "./types/search";
 import { searchTransformer } from "./transformers/search";
+import { BggError } from "./errors";
 
+export { BggError } from "./errors";
 export {
   CollectionResponse,
   CollectionItemInformation,
@@ -50,7 +62,7 @@ export default class BGG {
           if (e.detail) {
             progressListener(e.detail);
           }
-        }
+        },
       );
     }
     if (percentListener) {
@@ -60,38 +72,82 @@ export default class BGG {
           if (e.detail) {
             percentListener(e.detail);
           }
-        }
+        },
       );
     }
   }
 
-  private fetchFromBgg = async <T extends object>(uri: string): Promise<T> => {
-    const data = await fetch(uri, {
-      headers: { Authorization: "Bearer " + this.authToken },
-      signal: this.signal,
-    });
-    const text = await data.text();
-    const json: T = xmlToJson(text);
+  private resolveSignal(signal?: AbortSignal): AbortSignal | undefined {
+    return signal ?? this.signal;
+  }
 
-    if (data.status === 200) {
-      return json as T;
-    } else {
-      throw {
-        status: data.status,
-        message: `Request completed with status ${data.status}.`,
-        details:
-          data.status === 202
-            ? "BGG is fetching your data, retry your request in 5~10 seconds."
-            : data.status === 429
-            ? "Too many requests. Please wait."
-            : undefined,
-      };
+  private async fetchFromBgg<T extends object>(
+    uri: string,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    const response = await fetch(uri, {
+      headers: { Authorization: "Bearer " + this.authToken },
+      signal: this.resolveSignal(signal),
+    });
+
+    if (response.status === 200) {
+      const text = await response.text();
+      return xmlToJson(text) as T;
     }
-  };
+
+    throw new BggError(
+      `Request completed with status ${response.status}.`,
+      {
+        status: response.status,
+        retriable: response.status === 202 || response.status === 429,
+        details:
+          response.status === 202
+            ? "BGG is fetching your data, retry your request in 5~10 seconds."
+            : response.status === 429
+              ? "Too many requests. Please wait."
+              : undefined,
+      },
+    );
+  }
+
+  private async requestWithRetry<T extends object>(
+    uri: string,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    const resolvedSignal = this.resolveSignal(signal);
+    let attempt = 0;
+
+    while (true) {
+      try {
+        return await this.fetchFromBgg<T>(uri, resolvedSignal);
+      } catch (error) {
+        if (isAbortError(error) || resolvedSignal?.aborted) {
+          throw error;
+        }
+
+        const canRetry =
+          attempt < MAX_RETRIES &&
+          ((error instanceof BggError && error.retriable) ||
+            isNetworkError(error));
+
+        if (!canRetry) {
+          throw error;
+        }
+
+        attempt += 1;
+        const delaySeconds =
+          error instanceof BggError && error.status === 429
+            ? RETRY_DELAY_RATE_LIMIT
+            : RETRY_DELAY_ACCEPTED;
+        await pause(delaySeconds, resolvedSignal);
+      }
+    }
+  }
 
   async thing(
     id: string | number | Array<string | number>,
-    options?: Partial<ThingOptions>
+    options?: Partial<ThingOptions>,
+    signal?: AbortSignal,
   ): Promise<ThingResponse> {
     if (Array.isArray(id) && id.length === 0) {
       return {
@@ -99,6 +155,7 @@ export default class BGG {
         items: [],
       };
     }
+
     const chunks: (string | number)[] = [];
 
     if (Array.isArray(id)) {
@@ -114,77 +171,87 @@ export default class BGG {
       ratingcomments = true;
     }
 
-    const uris = chunks.map((id) =>
+    const uris = chunks.map((chunkId) =>
       generateURI(XMLAPI2, "thing", {
-        id,
+        id: chunkId,
         ratingcomments,
         ...options,
-      })
+      }),
     );
 
+    const resolvedSignal = this.resolveSignal(signal);
     const results: ThingResponse = {
       termsOfUse: "",
       items: [],
     };
+
     for (let i = 0; i < uris.length; ++i) {
-      const uri = uris[i];
-      try {
-        const response = await this.fetchFromBgg<RawThingResponse>(uri);
-        const partial = ThingTransformer(response);
-        if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
-        results.items.push(...partial.items);
-        this.progressEmitter.dispatchEvent(
-          new CustomEvent("progress", {
-            detail: partial.items,
-          })
-        );
-        this.progressEmitter.dispatchEvent(
-          new CustomEvent("percent", { detail: i / uris.length })
-        );
-        if (i < uris.length - 1) {
-          await pause(2);
-        }
-      } catch (e) {
-        console.log(e);
-        console.log("pausing for 5 seconds");
-        await pause(10);
-        --i;
-        continue;
+      const response = await this.requestWithRetry<RawThingResponse>(
+        uris[i],
+        resolvedSignal,
+      );
+      const partial = ThingTransformer(response);
+      if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
+      results.items.push(...partial.items);
+      this.progressEmitter.dispatchEvent(
+        new CustomEvent("progress", {
+          detail: partial.items,
+        }),
+      );
+      this.progressEmitter.dispatchEvent(
+        new CustomEvent("percent", { detail: i / uris.length }),
+      );
+      if (i < uris.length - 1) {
+        await pause(CHUNK_DELAY, resolvedSignal);
       }
     }
+
     this.progressEmitter.dispatchEvent(
-      new CustomEvent("percent", { detail: 1 })
+      new CustomEvent("percent", { detail: 1 }),
     );
     return results;
   }
 
   async collection(
     username: string,
-    options?: Partial<CollectionOptions>
+    options?: Partial<CollectionOptions>,
+    signal?: AbortSignal,
   ): Promise<CollectionResponse> {
     const uri = generateURI(XMLAPI2, "collection", {
       username,
       ...options,
     });
-
-    try {
-      const response = await this.fetchFromBgg<RawCollectionResponse>(uri);
-      return CollectionTransformer(response);
-    } catch (e) {
-      await pause(10);
-      return this.collection(username, options);
-    }
+    const response = await this.requestWithRetry<RawCollectionResponse>(
+      uri,
+      signal,
+    );
+    return CollectionTransformer(response);
   }
 
-  async user(username: string) {
+  async user(username: string, signal?: AbortSignal): Promise<UserResponse> {
     const uri = generateURI(XMLAPI2, "user", { name: username });
-    const response = await this.fetchFromBgg<RawUserResponse>(uri);
+    const response = await this.requestWithRetry<RawUserResponse>(uri, signal);
     return UserTransformer(response);
   }
 
-  async search(query: string, options?: Partial<SearchOptions>) {
+  async search(
+    query: string,
+    options?: Partial<SearchOptions>,
+    signal?: AbortSignal,
+  ): Promise<SearchResponse> {
     const uri = generateURI(XMLAPI2, "search", { query, ...options });
-    const response = await this.fetchFromBgg<RawSearchResponse>(uri);
+    const response = await this.requestWithRetry<RawSearchResponse>(
+      uri,
+      signal,
+    );
     return searchTransformer(response);
   }
 }
+
+const isAbortError = (error: unknown): boolean => {
+  return error instanceof Error && error.name === "AbortError";
+};
+
+const isNetworkError = (error: unknown): boolean => {
+  return error instanceof TypeError;
+};

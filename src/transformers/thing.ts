@@ -148,25 +148,24 @@ const getRecommendedOrBest = (
     });
 };
 
-export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
-  try {
-    let {
-      $,
-      thumbnail,
-      image,
-      name,
-      description,
-      yearpublished,
-      minplayers,
-      maxplayers,
-      poll: [suggested_numplayers, suggested_playerage, language_dependence],
-      "poll-summary": suggested_numplayers_results,
-      playingtime,
-      minplaytime,
-      maxplaytime,
-      minage,
-      link,
-    } = raw;
+export const RawItemTransformer = (raw: RawItem): ThingInformation => {
+  let {
+    $,
+    thumbnail,
+    image,
+    name,
+    description,
+    yearpublished,
+    minplayers,
+    maxplayers,
+    poll: [suggested_numplayers, suggested_playerage, language_dependence],
+    "poll-summary": suggested_numplayers_results,
+    playingtime,
+    minplaytime,
+    maxplaytime,
+    minage,
+    link,
+  } = raw;
 
     link = Array.isArray(link) ? link : [link];
     suggested_numplayers_results.result = Array.isArray(
@@ -289,26 +288,8 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation | null => {
       res.versions = item.map(versionMapper);
     }
 
-    // if (raw.videos !== undefined) {
-    //   const {
-    //     $: { total },
-    //     video,
-    //   } = raw.videos;
-    // }
-
     return res;
-  } catch (e) {
-    console.log(e);
-    console.log(
-      `Failed to save data for ${raw.$.id} - ${
-        Array.isArray(raw.name)
-          ? raw.name.find((n) => n.type === "primary")?.value
-          : raw.name.value
-      }`
-    );
-    return null;
-  }
-};
+  };
 
 export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
   const {
@@ -319,7 +300,7 @@ export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
   return {
     termsOfUse,
     items: Array.isArray(item)
-      ? item.map(RawItemTransformer).filter((v) => v !== null)
-      : [item].map(RawItemTransformer).filter((v) => v !== null),
+      ? item.map(RawItemTransformer)
+      : [item].map(RawItemTransformer),
   };
 };

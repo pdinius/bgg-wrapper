@@ -21,8 +21,32 @@ export const generateURI = (
   return base + route + paramString;
 };
 
-export const pause = (seconds: number) => {
-  return new Promise((res) => setTimeout(res, seconds * 1000));
+export const pause = (seconds: number, signal?: AbortSignal) => {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(abortError(signal));
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, seconds * 1000);
+
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(abortError(signal));
+    };
+
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+};
+
+const abortError = (signal?: AbortSignal) => {
+  if (signal?.reason instanceof Error) return signal.reason;
+  const error = new Error("This operation was aborted");
+  error.name = "AbortError";
+  return error;
 };
 
 export const cleanString = (s: string) => {

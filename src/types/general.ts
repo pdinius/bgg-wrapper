@@ -11,10 +11,6 @@ export const isThingType = (s: string): s is ThingType => {
 
 export type ThingType = (typeof THING_TYPE)[number];
 export type NameType = "primary" | "alternate";
-export interface IError {
-  status: number;
-  message: string;
-}
 export type LanguageDependenceLevel =
   | "No necessary in-game text"
   | "Some necessary text - easily memorized or small crib sheet"
