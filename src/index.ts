@@ -66,9 +66,9 @@ export {
   SearchResponse,
   SearchResult,
 } from "./types/search";
-export { ThingType, NameType, LinkType } from "./types/general";
+export { ThingType, NameType, LinkType, LanguageDependenceLevel } from "./types/general";
 
-export default class BGG {
+export class BGG {
   private signal: AbortSignal | undefined;
   private progressEmitter = new EventTarget();
   private authToken: string;
@@ -220,16 +220,13 @@ export default class BGG {
         }),
       );
       this.progressEmitter.dispatchEvent(
-        new CustomEvent("percent", { detail: i / uris.length }),
+        new CustomEvent("percent", { detail: (i + 1) / uris.length }),
       );
       if (i < uris.length - 1) {
         await pause(CHUNK_DELAY, resolvedSignal);
       }
     }
 
-    this.progressEmitter.dispatchEvent(
-      new CustomEvent("percent", { detail: 1 }),
-    );
     return results;
   }
 
@@ -318,3 +315,5 @@ const isAbortError = (error: unknown): boolean => {
 const isNetworkError = (error: unknown): boolean => {
   return error instanceof TypeError;
 };
+
+export default BGG;

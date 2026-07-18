@@ -50,10 +50,6 @@ const abortError = (signal?: AbortSignal) => {
   return error;
 };
 
-export const cleanString = (s: string) => {
-  return s.trim().replace(/\s+/g, " ");
-};
-
 export const invariantArray = <T>(v: T | Array<T>): Array<T> => {
   return [v].flat() as Array<T>;
 };

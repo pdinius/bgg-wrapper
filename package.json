@@ -1,18 +1,31 @@
 {
   "name": "bgg-wrapper",
   "version": "3.0.2",
-  "description": "",
+  "description": "TypeScript wrapper for the BoardGameGeek XML API2 with JSON transforms and automatic 202/429 retries",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
     "README.md"
   ],
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js\""
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
+  "keywords": [
+    "boardgamegeek",
+    "bgg",
+    "board-game",
+    "xml-api",
+    "typescript"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
