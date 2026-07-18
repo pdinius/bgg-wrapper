@@ -18,6 +18,7 @@ import BGG, { BggError } from "bgg-wrapper";
 
 const bgg = new BGG({
   authToken: "00000000-0000-0000-0000-000000000000",
+  memoize: true, // optional: cache transformed JSON in memory
 });
 
 const ticketToRide = await bgg.thing("9209");
@@ -32,9 +33,15 @@ console.log(ticketToRide.items[0].name); // Ticket to Ride
 | `collection(username, options?, signal?)` | Fetch a user's collection (handles 202 polling) |
 | `collectionComplete(username, options?, signal?)` | Collection plus merged `thing` stats/links |
 | `user(username, signal?)` | Fetch a user profile |
-| `search(query, options?, signal?)` | Search for things by name |
+| `clearMemo()` | Clears the in-memory memo cache for this instance |
 
-### Progress listeners
+### Memoization
+
+Pass `memoize: true` to cache transformed JSON on the client instance:
+
+- **`thing`** caches each game individually. Option sets are matched with superset rules (e.g. a `stats: true` entry can satisfy a later request without stats). Partial array overlaps reuse cached ids and only fetch the rest.
+- **`collection` / `user` / `search` / `collectionComplete`** use exact-parameter keys.
+- Call `clearMemo()` to drop the cache. Cached values are cloned so callers can mutate results safely.
 
 For large `thing` requests you can track chunk progress:
 

@@ -34,6 +34,11 @@ import {
 } from "./types/search";
 import { SearchTransformer } from "./transformers/search";
 import { BggError } from "./errors";
+import {
+  normalizeThingOptions,
+  stableSerialize,
+  ThingMemoCache,
+} from "./shared/memo";
 
 export { BggError } from "./errors";
 export {
@@ -72,16 +77,28 @@ export class BGG {
   private signal: AbortSignal | undefined;
   private progressEmitter = new EventTarget();
   private authToken: string;
+  private memoize: boolean;
+  private thingCache = new ThingMemoCache();
+  private responseCache = new Map<string, unknown>();
 
   constructor(props: {
     authToken: string;
     signal?: AbortSignal;
+    /** When true, cache transformed JSON responses in memory for this instance. */
+    memoize?: boolean;
     progressListener?: (items: ThingInformation[]) => void;
     percentListener?: (percent: number) => void;
   }) {
-    const { authToken, signal, progressListener, percentListener } = props;
+    const {
+      authToken,
+      signal,
+      memoize = false,
+      progressListener,
+      percentListener,
+    } = props;
     this.authToken = authToken;
     this.signal = signal;
+    this.memoize = memoize;
     if (progressListener) {
       this.progressEmitter.addEventListener(
         "progress",
@@ -102,6 +119,12 @@ export class BGG {
         },
       );
     }
+  }
+
+  /** Clears all memoized responses for this client instance. */
+  clearMemo(): void {
+    this.thingCache.clear();
+    this.responseCache.clear();
   }
 
   private resolveSignal(signal?: AbortSignal): AbortSignal | undefined {
@@ -168,6 +191,19 @@ export class BGG {
     }
   }
 
+  private getCachedResponse<T>(key: string): T | undefined {
+    if (!this.memoize) return undefined;
+    const hit = this.responseCache.get(key);
+    return hit === undefined ? undefined : (structuredClone(hit) as T);
+  }
+
+  private setCachedResponse<T>(key: string, value: T): T {
+    if (this.memoize) {
+      this.responseCache.set(key, structuredClone(value));
+    }
+    return value;
+  }
+
   async thing(
     id: string | number | Array<string | number>,
     options?: Partial<ThingOptions>,
@@ -180,54 +216,90 @@ export class BGG {
       };
     }
 
-    const chunks: (string | number)[] = [];
+    const requestedIds = (Array.isArray(id) ? id : [id]).map(String);
+    const normalizedOptions = normalizeThingOptions(options);
+    const resolvedSignal = this.resolveSignal(signal);
 
-    if (Array.isArray(id)) {
-      for (let i = 0; i < id.length; i += 20) {
-        chunks.push(id.slice(i, i + 20).join(","));
+    const itemsById = new Map<string, ThingInformation>();
+    const missingIds: string[] = [];
+
+    for (const thingId of requestedIds) {
+      if (this.memoize) {
+        const cached = this.thingCache.get(thingId, normalizedOptions);
+        if (cached) {
+          itemsById.set(thingId, cached);
+          continue;
+        }
       }
-    } else {
-      chunks.push(id);
+      if (!missingIds.includes(thingId)) {
+        missingIds.push(thingId);
+      }
+    }
+
+    const chunks: string[] = [];
+    for (let i = 0; i < missingIds.length; i += 20) {
+      chunks.push(missingIds.slice(i, i + 20).join(","));
     }
 
     const { ratings, ...restOptions } = options ?? {};
+    let termsOfUse = TERMS_OF_USE;
 
-    const uris = chunks.map((chunkId) =>
-      generateURI(XMLAPI2, "thing", {
-        id: chunkId,
+    for (let i = 0; i < chunks.length; ++i) {
+      const uri = generateURI(XMLAPI2, "thing", {
+        id: chunks[i],
         ...restOptions,
         ...(ratings !== undefined ? { ratingcomments: ratings } : {}),
-      }),
-    );
-
-    const resolvedSignal = this.resolveSignal(signal);
-    const results: ThingResponse = {
-      termsOfUse: "",
-      items: [],
-    };
-
-    for (let i = 0; i < uris.length; ++i) {
+      });
       const response = await this.requestWithRetry<RawThingResponse>(
-        uris[i],
+        uri,
         resolvedSignal,
       );
       const partial = ThingTransformer(response);
-      if (!results.termsOfUse) results.termsOfUse = partial.termsOfUse;
-      results.items.push(...partial.items);
+      if (partial.termsOfUse) termsOfUse = partial.termsOfUse;
+
+      for (const item of partial.items) {
+        const key = String(item.id);
+        itemsById.set(key, item);
+        if (this.memoize) {
+          this.thingCache.set(key, normalizedOptions, item);
+        }
+      }
+
       this.progressEmitter.dispatchEvent(
         new CustomEvent("progress", {
           detail: partial.items,
         }),
       );
       this.progressEmitter.dispatchEvent(
-        new CustomEvent("percent", { detail: (i + 1) / uris.length }),
+        new CustomEvent("percent", {
+          detail: chunks.length === 0 ? 1 : (i + 1) / chunks.length,
+        }),
       );
-      if (i < uris.length - 1) {
+      if (i < chunks.length - 1) {
         await pause(CHUNK_DELAY, resolvedSignal);
       }
     }
 
-    return results;
+    if (chunks.length === 0) {
+      this.progressEmitter.dispatchEvent(
+        new CustomEvent("percent", { detail: 1 }),
+      );
+    }
+
+    // Preserve first-seen request order (and drop duplicate ids).
+    const seen = new Set<string>();
+    const ordered: ThingInformation[] = [];
+    for (const thingId of requestedIds) {
+      if (seen.has(thingId)) continue;
+      seen.add(thingId);
+      const item = itemsById.get(thingId);
+      if (item) ordered.push(item);
+    }
+
+    return {
+      termsOfUse,
+      items: ordered,
+    };
   }
 
   async collection(
@@ -235,6 +307,10 @@ export class BGG {
     options?: Partial<CollectionOptions>,
     signal?: AbortSignal,
   ): Promise<CollectionResponse> {
+    const cacheKey = `collection:${stableSerialize({ username, options })}`;
+    const cached = this.getCachedResponse<CollectionResponse>(cacheKey);
+    if (cached) return cached;
+
     const uri = generateURI(XMLAPI2, "collection", {
       username,
       ...options,
@@ -243,7 +319,7 @@ export class BGG {
       uri,
       signal,
     );
-    return CollectionTransformer(response);
+    return this.setCachedResponse(cacheKey, CollectionTransformer(response));
   }
 
   async collectionComplete(
@@ -251,6 +327,14 @@ export class BGG {
     options?: Partial<CollectionOptions>,
     signal?: AbortSignal,
   ): Promise<CompleteDataCollectionResponse> {
+    const cacheKey = `collectionComplete:${stableSerialize({
+      username,
+      options,
+    })}`;
+    const cached =
+      this.getCachedResponse<CompleteDataCollectionResponse>(cacheKey);
+    if (cached) return cached;
+
     const collection = await this.collection(
       username,
       { ...options, stats: true },
@@ -258,11 +342,11 @@ export class BGG {
     );
 
     if (collection.items.length === 0) {
-      return {
+      return this.setCachedResponse(cacheKey, {
         termsOfUse: collection.termsOfUse,
         retrievalDate: collection.retrievalDate,
         items: [],
-      };
+      });
     }
 
     const things = await this.thing(
@@ -272,7 +356,7 @@ export class BGG {
     );
     const thingsById = new Map(things.items.map((item) => [item.id, item]));
 
-    return {
+    return this.setCachedResponse(cacheKey, {
       termsOfUse: collection.termsOfUse,
       retrievalDate: collection.retrievalDate,
       items: collection.items.map((collectionItem) => {
@@ -285,13 +369,17 @@ export class BGG {
         }
         return CompleteDataCollectionItemTransformer(thing, collectionItem);
       }),
-    };
+    });
   }
 
   async user(username: string, signal?: AbortSignal): Promise<UserResponse> {
+    const cacheKey = `user:${username}`;
+    const cached = this.getCachedResponse<UserResponse>(cacheKey);
+    if (cached) return cached;
+
     const uri = generateURI(XMLAPI2, "user", { name: username });
     const response = await this.requestWithRetry<RawUserResponse>(uri, signal);
-    return UserTransformer(response);
+    return this.setCachedResponse(cacheKey, UserTransformer(response));
   }
 
   async search(
@@ -299,12 +387,16 @@ export class BGG {
     options?: Partial<SearchOptions>,
     signal?: AbortSignal,
   ): Promise<SearchResponse> {
+    const cacheKey = `search:${stableSerialize({ query, options })}`;
+    const cached = this.getCachedResponse<SearchResponse>(cacheKey);
+    if (cached) return cached;
+
     const uri = generateURI(XMLAPI2, "search", { query, ...options });
     const response = await this.requestWithRetry<RawSearchResponse>(
       uri,
       signal,
     );
-    return SearchTransformer(response);
+    return this.setCachedResponse(cacheKey, SearchTransformer(response));
   }
 }
 
