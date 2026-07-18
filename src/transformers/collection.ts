@@ -10,7 +10,7 @@ import {
 import { ThingInformation } from "../types/thing";
 
 const RawCollectionTransformer = (
-  collectionItem: RawCollectionItem
+  collectionItem: RawCollectionItem,
 ): CollectionItemInformation => {
   const {
     $: { objectid },
@@ -23,13 +23,15 @@ const RawCollectionTransformer = (
     stats,
   } = collectionItem;
 
+  const onWishlist = Boolean(status.wishlist);
+
   const res: CollectionItemInformation = {
     id: objectid,
     name: decodeEntities(_content),
     image,
     thumbnail,
-    yearPublished: yearpublished || null,
-    numPlays: numplays || 0,
+    yearPublished: yearpublished ?? null,
+    numPlays: numplays ?? 0,
     status: {
       own: Boolean(status.own),
       prevOwned: Boolean(status.prevowned),
@@ -37,7 +39,8 @@ const RawCollectionTransformer = (
       want: Boolean(status.want),
       wantToPlay: Boolean(status.wanttoplay),
       wantToBuy: Boolean(status.wanttobuy),
-      wishlist: (status.wishlist && status.wishlistpriority) || 0,
+      wishlist: onWishlist,
+      wishlistPriority: onWishlist ? status.wishlistpriority : null,
       preordered: Boolean(status.preordered),
       lastModified: new Date(status.lastmodified),
     },
@@ -61,24 +64,27 @@ const RawCollectionTransformer = (
       },
     } = stats;
 
-    const ranksArr = Array.isArray(rank) ? rank : [rank];
+    const ranksArr = rank ? invariantArray(rank) : [];
 
     res.statistics = {
-      minPlayers: minPlayers || -1,
-      maxPlayers: maxPlayers || -1,
-      minPlayTime: minPlayTime || -1,
-      maxPlayTime: maxPlayTime || -1,
+      minPlayers: minPlayers ?? null,
+      maxPlayers: maxPlayers ?? null,
+      minPlayTime: minPlayTime ?? null,
+      maxPlayTime: maxPlayTime ?? null,
       owned,
-      rating: rating === "N/A" ? -1 : rating,
+      rating: rating === "N/A" ? null : rating,
       usersRated,
       averageRating,
       geekRating,
-      ranks: ranksArr.map((r) => ({
-        id: r.id,
-        category: r.name,
-        label: r.friendlyname,
-        rank: r.value === "Not Ranked" ? -1 : r.value,
-      })),
+      ranks:
+        ranksArr.length === 0
+          ? null
+          : ranksArr.map((r) => ({
+              id: r.id,
+              category: r.name,
+              label: r.friendlyname,
+              rank: r.value === "Not Ranked" ? null : r.value,
+            })),
     };
   }
 
@@ -86,7 +92,7 @@ const RawCollectionTransformer = (
 };
 
 export const CollectionTransformer = (
-  raw: RawCollectionResponse
+  raw: RawCollectionResponse,
 ): CollectionResponse => {
   const {
     items: {
@@ -104,17 +110,19 @@ export const CollectionTransformer = (
 
 export const CompleteDataCollectionItemTransformer = (
   item: ThingInformation,
-  collectionItem: CollectionItemInformation
+  collectionItem: CollectionItemInformation,
 ): CompleteDataCollectionItemInformation => {
-  const statistics = invariant(
+  invariant(
     item.statistics,
-    "Cannot transform item to complete data collection item without statistics object."
+    "Cannot transform item to complete data collection item without statistics object.",
   );
   const collectionStats: Omit<CollectionStatistics, "ranks"> &
-    Partial<Pick<CollectionStatistics, "ranks">> = invariant(
-    collectionItem.statistics,
-    "Cannot transform collection item to complete data collection item without statistics object."
-  );
+    Partial<Pick<CollectionStatistics, "ranks">> = {
+    ...invariant(
+      collectionItem.statistics,
+      "Cannot transform collection item to complete data collection item without statistics object.",
+    ),
+  };
   delete collectionStats.ranks;
 
   const {
@@ -130,6 +138,14 @@ export const CompleteDataCollectionItemTransformer = (
     artists,
     publishers,
   } = item;
+
+  const suggestedPlayerAge = Object.entries(item.suggestedPlayerAgePoll).reduce(
+    (a: { age: number | null; v: number }, [age, v]) => {
+      return a.v > v ? a : { age: Number(age), v };
+    },
+    { age: null as number | null, v: -Infinity },
+  ).age;
+
   return {
     ...collectionItem,
     categories,
@@ -145,7 +161,6 @@ export const CompleteDataCollectionItemTransformer = (
     publishers,
     statistics: {
       ...collectionStats,
-      rating: collectionStats.rating || -1,
       bestWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
         (a: number[], [pc, votes]) => {
           return votes.best > votes.notRecommended &&
@@ -153,7 +168,7 @@ export const CompleteDataCollectionItemTransformer = (
             ? [...a, Number(pc)]
             : a;
         },
-        []
+        [],
       ),
       recommendedWith: Object.entries(item.suggestedNumPlayersPoll).reduce(
         (a: number[], [pc, votes]) => {
@@ -161,25 +176,20 @@ export const CompleteDataCollectionItemTransformer = (
             ? [...a, Number(pc)]
             : a;
         },
-        []
+        [],
       ),
-      suggestedPlayerAge: Object.entries(item.suggestedPlayerAgePoll).reduce(
-        (a: { age: number; v: number; }, [age, v]) => {
-          return a.v > v ? a : { age: Number(age), v };
-        },
-        { age: -1, v: -Infinity }
-      ).age,
+      suggestedPlayerAge,
       languageDependence: item.languageDependencePoll.reduce(
-        (a: { value: string; votes: number; }, b) => {
+        (a: { value: string; votes: number }, b) => {
           return a.votes > b.votes ? a : b;
         },
-        { value: "", votes: -Infinity }
+        { value: "", votes: -Infinity },
       ).value,
-      rank: item.statistics?.ranks?.find((r) => r.id === 1)?.rank || -1,
-      trading: item.statistics?.trading || -1,
-      wanting: item.statistics?.wanting || -1,
-      wishing: item.statistics?.wishing || -1,
-      weight: item.statistics?.weight || -1,
+      rank: item.statistics?.ranks?.find((r) => r.id === 1)?.rank ?? null,
+      trading: item.statistics?.trading ?? null,
+      wanting: item.statistics?.wanting ?? null,
+      wishing: item.statistics?.wishing ?? null,
+      weight: item.statistics?.weight ?? null,
     },
   };
 };

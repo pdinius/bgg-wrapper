@@ -1,10 +1,39 @@
-// Options
-
 import { LinkInformation, RankInformation } from "./thing";
+import { ThingType } from "./general";
+
+export type CollectionSubtype = Extract<
+  ThingType,
+  "boardgame" | "boardgameexpansion" | "boardgameaccessory"
+>;
 
 export interface CollectionOptions {
+  version: boolean;
+  subtype: CollectionSubtype;
+  excludesubtype: CollectionSubtype;
+  id: string | number;
+  own: boolean;
+  rated: boolean;
+  played: boolean;
+  comment: boolean;
+  trade: boolean;
+  want: boolean;
+  wishlist: boolean;
+  wishlistpriority: 1 | 2 | 3 | 4 | 5;
+  preordered: boolean;
+  wanttoplay: boolean;
+  wanttobuy: boolean;
+  prevowned: boolean;
+  hasparts: boolean;
+  wantparts: boolean;
+  minrating: number;
+  rating: number;
+  minbggrating: number;
+  bggrating: number;
+  minplays: number;
+  maxplays: number;
+  showprivate: boolean;
   stats: boolean;
-  excludesubtype: "boardgameexpansion";
+  modifiedsince: string;
 }
 
 // Raw Response
@@ -96,10 +125,10 @@ export interface RawCollectionResponse {
 // Returned Item
 
 export interface CollectionStatistics {
-  minPlayers: number;
-  maxPlayers: number;
-  minPlayTime?: number;
-  maxPlayTime?: number;
+  minPlayers: number | null;
+  maxPlayers: number | null;
+  minPlayTime: number | null;
+  maxPlayTime: number | null;
   owned: number;
   rating: number | null;
   usersRated: number;
@@ -122,7 +151,8 @@ export interface CollectionItemInformation {
     want: boolean;
     wantToPlay: boolean;
     wantToBuy: boolean;
-    wishlist: number;
+    wishlist: boolean;
+    wishlistPriority: number | null;
     preordered: boolean;
     lastModified: Date;
   };
@@ -130,16 +160,15 @@ export interface CollectionItemInformation {
 }
 
 export interface CompleteStatistics extends Omit<CollectionStatistics, "ranks"> {
-  rating: number;
   bestWith: number[];
   recommendedWith: number[];
-  suggestedPlayerAge: number;
+  suggestedPlayerAge: number | null;
   languageDependence: string;
-  rank: number;
-  trading: number;
-  wanting: number;
-  wishing: number;
-  weight: number;
+  rank: number | null;
+  trading: number | null;
+  wanting: number | null;
+  wishing: number | null;
+  weight: number | null;
 }
 
 export interface CompleteDataCollectionItemInformation

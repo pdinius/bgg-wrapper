@@ -1,8 +1,4 @@
 import {
-  CompleteDataCollectionItemInformation,
-  CompleteStatistics,
-} from "./collection";
-import {
   LanguageDependenceLevel,
   LinkType,
   NameType,
@@ -17,6 +13,7 @@ export interface ThingOptions {
   videos: boolean;
   marketplace: boolean;
   comments: boolean;
+  /** Maps to BGG's `ratingcomments` query param. */
   ratings: boolean;
   page: number;
 }
@@ -324,7 +321,7 @@ export interface RankInformation {
   id: number;
   category: string;
   label: string;
-  rank: number;
+  rank: number | null;
 }
 
 export interface Statistics {
@@ -352,6 +349,48 @@ export interface Version {
   length: number;
   depth: number;
   weight: number;
+}
+
+export interface Comment {
+  username: string;
+  rating: number | null;
+  value: string;
+}
+
+export interface Comments {
+  page: number;
+  totalItems: number;
+  comments: Comment[];
+}
+
+export interface MarketplaceListing {
+  listDate: string;
+  price: {
+    currency: string;
+    value: number;
+  };
+  condition: string;
+  notes: string;
+  link: {
+    href: string;
+    title: string;
+  };
+}
+
+export interface Video {
+  id: number;
+  title: string;
+  category: string;
+  language: string;
+  link: string;
+  username: string;
+  userId: number;
+  postDate: string;
+}
+
+export interface Videos {
+  total: number;
+  videos: Video[];
 }
 
 export interface ThingInformation {
@@ -394,6 +433,9 @@ export interface ThingInformation {
   containedIn: LinkInformation[];
   statistics?: Statistics;
   versions?: Version[];
+  comments?: Comments;
+  marketplace?: MarketplaceListing[];
+  videos?: Videos;
 }
 
 export interface ThingResponse {

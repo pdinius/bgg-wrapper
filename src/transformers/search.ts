@@ -1,3 +1,4 @@
+import { invariantArray } from "../shared/utils";
 import { isThingType } from "../types/general";
 import {
   RawSearchItem,
@@ -6,7 +7,7 @@ import {
   SearchResult,
 } from "../types/search";
 
-const searchItemTransformer = (raw: RawSearchItem): SearchResult => {
+const SearchItemTransformer = (raw: RawSearchItem): SearchResult => {
   return {
     id: raw.$.id,
     type: raw.$.type,
@@ -15,19 +16,14 @@ const searchItemTransformer = (raw: RawSearchItem): SearchResult => {
   };
 };
 
-export const searchTransformer = (raw: RawSearchResponse): SearchResponse => {
+export const SearchTransformer = (raw: RawSearchResponse): SearchResponse => {
   const searchResults = raw.items.item;
-
-  let items: SearchResult[] = [];
+  const items: SearchResult[] = [];
 
   if (searchResults !== undefined) {
-    if (Array.isArray(searchResults)) {
-      for (const result of searchResults) {
-        if (!isThingType(result.$.type)) continue;
-        items.push(searchItemTransformer(result));
-      }
-    } else {
-      items = [searchItemTransformer(searchResults)];
+    for (const result of invariantArray(searchResults)) {
+      if (!isThingType(result.$.type)) continue;
+      items.push(SearchItemTransformer(result));
     }
   }
 

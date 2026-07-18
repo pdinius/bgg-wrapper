@@ -17,9 +17,13 @@ import { ThingTransformer } from "./transformers/thing";
 import {
   CollectionOptions,
   CollectionResponse,
+  CompleteDataCollectionResponse,
   RawCollectionResponse,
 } from "./types/collection";
-import { CollectionTransformer } from "./transformers/collection";
+import {
+  CollectionTransformer,
+  CompleteDataCollectionItemTransformer,
+} from "./transformers/collection";
 import { RawUserResponse, UserResponse } from "./types/user";
 import { UserTransformer } from "./transformers/user";
 import xmlToJson from "@phildinius/xml-to-json";
@@ -28,18 +32,41 @@ import {
   SearchOptions,
   SearchResponse,
 } from "./types/search";
-import { searchTransformer } from "./transformers/search";
+import { SearchTransformer } from "./transformers/search";
 import { BggError } from "./errors";
 
 export { BggError } from "./errors";
 export {
+  CollectionOptions,
   CollectionResponse,
   CollectionItemInformation,
+  CollectionStatistics,
+  CollectionSubtype,
   CompleteDataCollectionResponse,
   CompleteDataCollectionItemInformation,
+  CompleteStatistics,
 } from "./types/collection";
-export { ThingResponse, ThingInformation } from "./types/thing";
+export {
+  ThingOptions,
+  ThingResponse,
+  ThingInformation,
+  Statistics,
+  Version,
+  Comment,
+  Comments,
+  MarketplaceListing,
+  Video,
+  Videos,
+  RankInformation,
+  LinkInformation,
+} from "./types/thing";
 export { UserResponse } from "./types/user";
+export {
+  SearchOptions,
+  SearchResponse,
+  SearchResult,
+} from "./types/search";
+export { ThingType, NameType, LinkType } from "./types/general";
 
 export default class BGG {
   private signal: AbortSignal | undefined;
@@ -95,19 +122,16 @@ export default class BGG {
       return xmlToJson(text) as T;
     }
 
-    throw new BggError(
-      `Request completed with status ${response.status}.`,
-      {
-        status: response.status,
-        retriable: response.status === 202 || response.status === 429,
-        details:
-          response.status === 202
-            ? "BGG is fetching your data, retry your request in 5~10 seconds."
-            : response.status === 429
-              ? "Too many requests. Please wait."
-              : undefined,
-      },
-    );
+    throw new BggError(`Request completed with status ${response.status}.`, {
+      status: response.status,
+      retriable: response.status === 202 || response.status === 429,
+      details:
+        response.status === 202
+          ? "BGG is fetching your data, retry your request in 5~10 seconds."
+          : response.status === 429
+            ? "Too many requests. Please wait."
+            : undefined,
+    });
   }
 
   private async requestWithRetry<T extends object>(
@@ -166,16 +190,13 @@ export default class BGG {
       chunks.push(id);
     }
 
-    let ratingcomments = false;
-    if (options && "ratings" in options) {
-      ratingcomments = true;
-    }
+    const { ratings, ...restOptions } = options ?? {};
 
     const uris = chunks.map((chunkId) =>
       generateURI(XMLAPI2, "thing", {
         id: chunkId,
-        ratingcomments,
-        ...options,
+        ...restOptions,
+        ...(ratings !== undefined ? { ratingcomments: ratings } : {}),
       }),
     );
 
@@ -228,6 +249,48 @@ export default class BGG {
     return CollectionTransformer(response);
   }
 
+  async collectionComplete(
+    username: string,
+    options?: Partial<CollectionOptions>,
+    signal?: AbortSignal,
+  ): Promise<CompleteDataCollectionResponse> {
+    const collection = await this.collection(
+      username,
+      { ...options, stats: true },
+      signal,
+    );
+
+    if (collection.items.length === 0) {
+      return {
+        termsOfUse: collection.termsOfUse,
+        retrievalDate: collection.retrievalDate,
+        items: [],
+      };
+    }
+
+    const things = await this.thing(
+      collection.items.map((item) => item.id),
+      { stats: true },
+      signal,
+    );
+    const thingsById = new Map(things.items.map((item) => [item.id, item]));
+
+    return {
+      termsOfUse: collection.termsOfUse,
+      retrievalDate: collection.retrievalDate,
+      items: collection.items.map((collectionItem) => {
+        const thing = thingsById.get(collectionItem.id);
+        if (!thing) {
+          throw new BggError(
+            `Missing thing data for collection item ${collectionItem.id}.`,
+            { status: 0 },
+          );
+        }
+        return CompleteDataCollectionItemTransformer(thing, collectionItem);
+      }),
+    };
+  }
+
   async user(username: string, signal?: AbortSignal): Promise<UserResponse> {
     const uri = generateURI(XMLAPI2, "user", { name: username });
     const response = await this.requestWithRetry<RawUserResponse>(uri, signal);
@@ -244,7 +307,7 @@ export default class BGG {
       uri,
       signal,
     );
-    return searchTransformer(response);
+    return SearchTransformer(response);
   }
 }
 

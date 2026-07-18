@@ -1,14 +1,15 @@
 export const generateURI = (
   base: string,
   route: string,
-  options?: { [key: string]: boolean | string | number }
+  options?: { [key: string]: boolean | string | number | undefined },
 ) => {
   const params = [];
 
   if (options) {
     for (const [k, v] of Object.entries(options)) {
+      if (v === undefined) continue;
       if (typeof v === "string") {
-        params.push(`${k}=${encodeURI(v)}`);
+        params.push(`${k}=${encodeURIComponent(v)}`);
       } else if (typeof v === "boolean") {
         params.push(`${k}=${v ? 1 : 0}`);
       } else {

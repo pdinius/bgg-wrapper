@@ -1,18 +1,22 @@
-import { decodeEntities, invariant, invariantArray } from "../shared/utils";
+import { decodeEntities, invariantArray } from "../shared/utils";
 import { LinkType } from "../types/general";
 import {
   ThingInformation,
   LanguageDependenceVotes,
   LinkInformation,
+  MarketplaceListing,
   RawItem,
   RawLanguageDependencePollResult,
   RawLink,
+  RawListing,
   RawSuggestedPlayerAgePollResult,
   RawSuggestedPlayersPollResult,
   RawThingResponse,
   RawVersion,
+  RawVideoInformation,
   SuggestedPlayerVotes,
   ThingResponse,
+  Video,
 } from "../types/thing";
 
 const BLANK_PLAYER_AGE_POLL = {
@@ -128,6 +132,31 @@ const versionMapper = (v: RawVersion) => {
   };
 };
 
+const marketplaceListingMapper = (listing: RawListing): MarketplaceListing => ({
+  listDate: listing.listdate.value,
+  price: {
+    currency: listing.price.currency,
+    value: listing.price.value,
+  },
+  condition: listing.condition.value,
+  notes: listing.notes.value,
+  link: {
+    href: listing.link.href,
+    title: listing.link.title,
+  },
+});
+
+const videoMapper = (video: RawVideoInformation): Video => ({
+  id: video.id,
+  title: video.title,
+  category: video.category,
+  language: video.language,
+  link: video.link,
+  username: video.username,
+  userId: video.userid,
+  postDate: video.postdate,
+});
+
 const getRecommendedOrBest = (
   result: {
     name: "bestwith" | "recommmendedwith";
@@ -167,129 +196,163 @@ export const RawItemTransformer = (raw: RawItem): ThingInformation => {
     link,
   } = raw;
 
-    link = Array.isArray(link) ? link : [link];
-    suggested_numplayers_results.result = Array.isArray(
-      suggested_numplayers_results.result
-    )
-      ? suggested_numplayers_results.result
-      : [suggested_numplayers_results.result];
-    const suggestedPlayers = Array.isArray(suggested_playerage.results?.result)
-      ? suggested_playerage.results?.result
-      : suggested_playerage.results?.result && [
-          suggested_playerage.results?.result,
-        ];
+  link = Array.isArray(link) ? link : [link];
+  suggested_numplayers_results.result = Array.isArray(
+    suggested_numplayers_results.result,
+  )
+    ? suggested_numplayers_results.result
+    : [suggested_numplayers_results.result];
+  const suggestedPlayers = Array.isArray(suggested_playerage.results?.result)
+    ? suggested_playerage.results?.result
+    : suggested_playerage.results?.result && [
+        suggested_playerage.results?.result,
+      ];
 
-    const languageDependencePoll =
-      language_dependence.results?.result.reduce(
-        languageDependenceReducer,
-        []
-      ) || BLANK_LANGUAGE_DEPENDENCE_POLL;
+  const languageDependencePoll =
+    language_dependence.results?.result.reduce(
+      languageDependenceReducer,
+      [],
+    ) || BLANK_LANGUAGE_DEPENDENCE_POLL;
 
-    const res: ThingInformation = {
-      id: $.id,
-      type: $.type,
-      name: decodeEntities(
-        invariantArray(name).find((n) => n.type === "primary")?.value || ""
-      ),
-      alternateNames: invariantArray(name)
-        .filter((n) => n.type !== "primary")
-        .map((n) => decodeEntities(n.value)),
-      image,
-      thumbnail,
-      description: decodeEntities(description),
-      yearPublished: yearpublished.value,
-      minPlayers: minplayers.value,
-      maxPlayers: maxplayers.value,
-      playingTime: playingtime.value,
-      minPlayTime: minplaytime.value,
-      maxPlayTime: maxplaytime.value,
-      minAge: minage.value,
-      bestWith: getRecommendedOrBest(suggested_numplayers_results.result, 0),
-      recommendedWith: getRecommendedOrBest(
-        suggested_numplayers_results.result,
-        1
-      ),
-      suggestedNumPlayersPoll: invariantArray(
-        suggested_numplayers.results
-      ).reduce(suggestedPlayersReducer, {}),
-      suggestedPlayerAgePoll:
-        suggestedPlayers?.reduce(suggestedPlayerAgeReducer, {}) ||
-        BLANK_PLAYER_AGE_POLL,
-      languageDependence: languageDependencePoll.reduce(
-        (a, b) => (a.votes > b.votes ? a : b),
-        { value: "", votes: -Infinity }
-      ).value,
-      languageDependencePoll,
-      categories: link.reduce(linkReducer("boardgamecategory"), []),
-      mechanics: link.reduce(linkReducer("boardgamemechanic"), []),
-      families: link.reduce(linkReducer("boardgamefamily"), []),
-      expands: link.reduce(linkReducer("boardgameexpansion", true), []),
-      expansions: link.reduce(linkReducer("boardgameexpansion", false), []),
-      accessories: link.reduce(linkReducer("boardgameaccessory"), []),
-      reimplements: link.reduce(
-        linkReducer("boardgameimplementation", true),
-        []
-      ),
-      reimplementedBy: link.reduce(
-        linkReducer("boardgameimplementation", false),
-        []
-      ),
-      designers: link.reduce(linkReducer("boardgamedesigner"), []),
-      artists: link.reduce(linkReducer("boardgameartist"), []),
-      publishers: link.reduce(linkReducer("boardgamepublisher"), []),
-      contains: link.reduce(linkReducer("boardgamecompilation", true), []),
-      containedIn: link.reduce(linkReducer("boardgamecompilation", false), []),
-    };
-
-    if (raw.statistics !== undefined) {
-      const {
-        statistics: {
-          ratings: {
-            usersrated,
-            average,
-            bayesaverage,
-            ranks: { rank },
-            owned,
-            trading,
-            wanting,
-            wishing,
-            numcomments,
-            numweights,
-            averageweight,
-          },
-        },
-      } = raw;
-
-      res.statistics = {
-        usersRated: usersrated.value,
-        averageRating: average.value,
-        geekRating: bayesaverage.value,
-        ranks: rank
-          ? invariantArray(rank).map((r) => ({
-              id: r.id,
-              category: r.name,
-              label: r.friendlyname,
-              rank: r.value,
-            }))
-          : null,
-        owned: owned.value,
-        trading: trading.value,
-        wanting: wanting.value,
-        wishing: wishing.value,
-        numComments: numcomments.value,
-        numWeights: numweights.value,
-        weight: averageweight.value,
-      };
-    }
-
-    if (raw.versions !== undefined) {
-      let { item } = raw.versions;
-      item = Array.isArray(item) ? item : [item];
-      res.versions = item.map(versionMapper);
-    }
-
-    return res;
+  const res: ThingInformation = {
+    id: $.id,
+    type: $.type,
+    name: decodeEntities(
+      invariantArray(name).find((n) => n.type === "primary")?.value || "",
+    ),
+    alternateNames: invariantArray(name)
+      .filter((n) => n.type !== "primary")
+      .map((n) => decodeEntities(n.value)),
+    image,
+    thumbnail,
+    description: decodeEntities(description),
+    yearPublished: yearpublished.value,
+    minPlayers: minplayers.value,
+    maxPlayers: maxplayers.value,
+    playingTime: playingtime.value,
+    minPlayTime: minplaytime.value,
+    maxPlayTime: maxplaytime.value,
+    minAge: minage.value,
+    bestWith: getRecommendedOrBest(suggested_numplayers_results.result, 0),
+    recommendedWith: getRecommendedOrBest(
+      suggested_numplayers_results.result,
+      1,
+    ),
+    suggestedNumPlayersPoll: invariantArray(suggested_numplayers.results).reduce(
+      suggestedPlayersReducer,
+      {},
+    ),
+    suggestedPlayerAgePoll:
+      suggestedPlayers?.reduce(suggestedPlayerAgeReducer, {}) ||
+      BLANK_PLAYER_AGE_POLL,
+    languageDependence: languageDependencePoll.reduce(
+      (a, b) => (a.votes > b.votes ? a : b),
+      { value: "", votes: -Infinity },
+    ).value,
+    languageDependencePoll,
+    categories: link.reduce(linkReducer("boardgamecategory"), []),
+    mechanics: link.reduce(linkReducer("boardgamemechanic"), []),
+    families: link.reduce(linkReducer("boardgamefamily"), []),
+    expands: link.reduce(linkReducer("boardgameexpansion", true), []),
+    expansions: link.reduce(linkReducer("boardgameexpansion", false), []),
+    accessories: link.reduce(linkReducer("boardgameaccessory"), []),
+    reimplements: link.reduce(
+      linkReducer("boardgameimplementation", true),
+      [],
+    ),
+    reimplementedBy: link.reduce(
+      linkReducer("boardgameimplementation", false),
+      [],
+    ),
+    designers: link.reduce(linkReducer("boardgamedesigner"), []),
+    artists: link.reduce(linkReducer("boardgameartist"), []),
+    publishers: link.reduce(linkReducer("boardgamepublisher"), []),
+    contains: link.reduce(linkReducer("boardgamecompilation", true), []),
+    containedIn: link.reduce(linkReducer("boardgamecompilation", false), []),
   };
+
+  if (raw.statistics !== undefined) {
+    const {
+      statistics: {
+        ratings: {
+          usersrated,
+          average,
+          bayesaverage,
+          ranks: { rank },
+          owned,
+          trading,
+          wanting,
+          wishing,
+          numcomments,
+          numweights,
+          averageweight,
+        },
+      },
+    } = raw;
+
+    res.statistics = {
+      usersRated: usersrated.value,
+      averageRating: average.value,
+      geekRating: bayesaverage.value,
+      ranks: rank
+        ? invariantArray(rank).map((r) => ({
+            id: r.id,
+            category: r.name,
+            label: r.friendlyname,
+            rank: r.value,
+          }))
+        : null,
+      owned: owned.value,
+      trading: trading.value,
+      wanting: wanting.value,
+      wishing: wishing.value,
+      numComments: numcomments.value,
+      numWeights: numweights.value,
+      weight: averageweight.value,
+    };
+  }
+
+  if (raw.versions !== undefined) {
+    let { item } = raw.versions;
+    item = Array.isArray(item) ? item : [item];
+    res.versions = item.map(versionMapper);
+  }
+
+  if (raw.comments !== undefined) {
+    const {
+      $: { page, totalitems },
+      comment,
+    } = raw.comments;
+    res.comments = {
+      page,
+      totalItems: totalitems,
+      comments: invariantArray(comment).map((c) => ({
+        username: c.username,
+        rating: c.rating === "N/A" ? null : c.rating,
+        value: decodeEntities(c.value),
+      })),
+    };
+  }
+
+  if (raw.marketplacelistings !== undefined) {
+    res.marketplace = invariantArray(raw.marketplacelistings.listing).map(
+      marketplaceListingMapper,
+    );
+  }
+
+  if (raw.videos !== undefined) {
+    const {
+      $: { total },
+      video,
+    } = raw.videos;
+    res.videos = {
+      total,
+      videos: invariantArray(video).map(videoMapper),
+    };
+  }
+
+  return res;
+};
 
 export const ThingTransformer = (raw: RawThingResponse): ThingResponse => {
   const {
