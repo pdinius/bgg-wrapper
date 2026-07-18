@@ -14,9 +14,11 @@ Here is a minimal example.
 > Note: you must to pass a valid bgg auth token. Other parameters are optional.
 
 ```
-import bggApi from "bgg-wrapper";
+import bggWrapper from "bgg-wrapper";
 
-const bgg = new bggApi({ authToken: "00000000-0000-0000-0000-000000000000" });
+const bgg = new bggWrapper({
+  authToken: "00000000-0000-0000-0000-000000000000"
+});
 
 const foo = async () => {
   const ticketToRideData = await bgg.thing("9209");
