@@ -1,7 +1,17 @@
 {
   "name": "bgg-wrapper",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "description": "TypeScript wrapper for the BoardGameGeek XML API2 with JSON transforms and automatic 202/429 retries",
+  "author": "Phil Dinius <phildinius@gmail.com>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pdinius/bgg-wrapper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pdinius/bgg-wrapper/issues"
+  },
+  "homepage": "https://github.com/pdinius/bgg-wrapper#readme",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -29,8 +39,6 @@
     "xml-api",
     "typescript"
   ],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@types/node": "^24.0.13",
     "typescript": "^5.7.3",
