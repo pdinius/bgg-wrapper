@@ -1,6 +1,7 @@
 import { generateURI, pause } from "./shared/utils";
 import {
   CHUNK_DELAY,
+  GEEKDO_API,
   MAX_RETRIES,
   RETRY_DELAY_ACCEPTED,
   RETRY_DELAY_RATE_LIMIT,
@@ -36,6 +37,7 @@ import {
 import { SearchTransformer } from "./transformers/search";
 import { GeeklistResponse, RawGeeklistResponse } from "./types/geeklist";
 import { GeeklistTransformer } from "./transformers/geeklist";
+import { RawGeekdoImageResponse } from "./types/image";
 import { BggError } from "./errors";
 import {
   normalizeThingOptions,
@@ -161,16 +163,44 @@ export class BGG {
     });
   }
 
-  private async requestWithRetry<T extends object>(
+  private async fetchJsonFromGeekdo<T extends object>(
     uri: string,
     signal?: AbortSignal,
   ): Promise<T> {
+    const response = await fetch(uri, {
+      headers: { Authorization: "Bearer " + this.authToken },
+      signal: this.resolveSignal(signal),
+    });
+
+    if (response.status === 200) {
+      return (await response.json()) as T;
+    }
+
+    throw new BggError(`Request completed with status ${response.status}.`, {
+      status: response.status,
+      retriable: response.status === 202 || response.status === 429,
+      details:
+        response.status === 202
+          ? "BGG is fetching your data, retry your request in 5~10 seconds."
+          : response.status === 429
+            ? "Too many requests. Please wait."
+            : undefined,
+    });
+  }
+
+  private async requestWithRetry<T extends object>(
+    uri: string,
+    signal?: AbortSignal,
+    fetchFn?: (uri: string, signal?: AbortSignal) => Promise<T>,
+  ): Promise<T> {
     const resolvedSignal = this.resolveSignal(signal);
+    const doFetch =
+      fetchFn ?? ((u, s) => this.fetchFromBgg<T>(u, s));
     let attempt = 0;
 
     while (true) {
       try {
-        return await this.fetchFromBgg<T>(uri, resolvedSignal);
+        return await doFetch(uri, resolvedSignal);
       } catch (error) {
         if (isAbortError(error) || resolvedSignal?.aborted) {
           throw error;
@@ -417,6 +447,26 @@ export class BGG {
       signal,
     );
     return this.setCachedResponse(cacheKey, GeeklistTransformer(response));
+  }
+
+  async image(id: string | number, signal?: AbortSignal): Promise<string> {
+    const cacheKey = `image:${id}`;
+    const cached = this.getCachedResponse<string>(cacheKey);
+    if (cached) return cached;
+
+    const uri = generateURI(GEEKDO_API, `images/${id}`);
+    const response = await this.requestWithRetry<RawGeekdoImageResponse>(
+      uri,
+      signal,
+      (u, s) => this.fetchJsonFromGeekdo(u, s),
+    );
+    const url = response.images?.original?.url;
+    if (!url) {
+      throw new BggError(`Missing original image URL for image ${id}.`, {
+        status: 0,
+      });
+    }
+    return this.setCachedResponse(cacheKey, url);
   }
 }
 

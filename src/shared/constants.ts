@@ -1,5 +1,6 @@
 export const XMLAPI = "https://boardgamegeek.com/xmlapi/";
 export const XMLAPI2 = "https://boardgamegeek.com/xmlapi2/";
+export const GEEKDO_API = "https://api.geekdo.com/api/";
 export const MAX_RETRIES = 20;
 /** Seconds to wait after a 202 Accepted before polling again. */
 export const RETRY_DELAY_ACCEPTED = 5;

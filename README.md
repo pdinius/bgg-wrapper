@@ -35,6 +35,7 @@ console.log(ticketToRide.items[0].name); // Ticket to Ride
 | `user(username, signal?)` | Fetch a user profile |
 | `search(query, options?, signal?)` | Search for things by name |
 | `geeklist(id, signal?)` | Fetch a geeklist by ID (legacy XML API) |
+| `image(id, signal?)` | Resolve an image ID to its original CDN URL (geekdo JSON API) |
 | `clearMemo()` | Clears the in-memory memo cache for this instance |
 
 ### Memoization
@@ -42,7 +43,7 @@ console.log(ticketToRide.items[0].name); // Ticket to Ride
 Pass `memoize: true` to cache transformed JSON on the client instance:
 
 - **`thing`** caches each game individually. Option sets are matched with superset rules (e.g. a `stats: true` entry can satisfy a later request without stats). Partial array overlaps reuse cached ids and only fetch the rest.
-- **`collection` / `user` / `search` / `geeklist` / `collectionComplete`** use exact-parameter keys.
+- **`collection` / `user` / `search` / `geeklist` / `image` / `collectionComplete`** use exact-parameter keys.
 - Call `clearMemo()` to drop the cache. Cached values are cloned so callers can mutate results safely.
 
 For large `thing` requests you can track chunk progress:
