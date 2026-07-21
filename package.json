@@ -1,6 +1,6 @@
 {
   "name": "bgg-wrapper",
-  "version": "4.3.1",
+  "version": "4.3.2",
   "description": "TypeScript wrapper for the BoardGameGeek XML API and XML API2 with JSON transforms and automatic 202/429 retries",
   "author": "Phil Dinius <phildinius@gmail.com>",
   "license": "ISC",
@@ -45,6 +45,6 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
-    "@phildinius/xml-to-json": "^1.0.2"
+    "@phildinius/xml-to-json": "^1.0.3"
   }
 }
