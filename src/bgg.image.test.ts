@@ -11,10 +11,13 @@ vi.mock("./shared/utils", async (importOriginal) => {
 
 const ORIGINAL_URL =
   "https://cf.geekdo-images.com/example__original/img/abc=/0x0/filters:format(png)/pic9678597.png";
+const MEDIUM_URL =
+  "https://cf.geekdo-images.com/example__medium/img/def=/fit-in/500x500/filters:strip_icc()/pic9678597.png";
 
 const imageJson = {
   images: {
     original: { url: ORIGINAL_URL },
+    medium: { url: MEDIUM_URL },
   },
 };
 
@@ -34,7 +37,7 @@ describe("BGG.image", () => {
     vi.clearAllMocks();
   });
 
-  it("returns images.original.url", async () => {
+  it("returns images.original.url by default", async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(jsonResponse(200, imageJson));
 
@@ -50,24 +53,43 @@ describe("BGG.image", () => {
     );
   });
 
-  it("memoizes the URL string", async () => {
+  it("returns the requested size URL", async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(jsonResponse(200, imageJson));
 
-    const bgg = new BGG({ authToken: "token", memoize: true });
-    const first = await bgg.image("9678597");
-    const second = await bgg.image("9678597");
+    const bgg = new BGG({ authToken: "token" });
+    const url = await bgg.image(9678597, { size: "medium" });
 
-    expect(first).toBe(ORIGINAL_URL);
-    expect(second).toBe(ORIGINAL_URL);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(url).toBe(MEDIUM_URL);
   });
 
-  it("throws when original.url is missing", async () => {
+  it("memoizes separately per size", async () => {
     const fetchMock = vi.mocked(fetch);
-    fetchMock.mockResolvedValueOnce(jsonResponse(200, { images: {} }));
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, imageJson))
+      .mockResolvedValueOnce(jsonResponse(200, imageJson));
+
+    const bgg = new BGG({ authToken: "token", memoize: true });
+    const original = await bgg.image("9678597");
+    const medium = await bgg.image("9678597", { size: "medium" });
+    const originalAgain = await bgg.image("9678597");
+
+    expect(original).toBe(ORIGINAL_URL);
+    expect(medium).toBe(MEDIUM_URL);
+    expect(originalAgain).toBe(ORIGINAL_URL);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws when the requested size URL is missing", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, { images: {} }))
+      .mockResolvedValueOnce(jsonResponse(200, { images: {} }));
 
     const bgg = new BGG({ authToken: "token" });
     await expect(bgg.image(1)).rejects.toBeInstanceOf(BggError);
+    await expect(bgg.image(1, { size: "square" })).rejects.toBeInstanceOf(
+      BggError,
+    );
   });
 });

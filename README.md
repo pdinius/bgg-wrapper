@@ -35,7 +35,7 @@ console.log(ticketToRide.items[0].name); // Ticket to Ride
 | `user(username, signal?)` | Fetch a user profile |
 | `search(query, options?, signal?)` | Search for things by name |
 | `geeklist(id, signal?)` | Fetch a geeklist by ID (legacy XML API) |
-| `image(id, signal?)` | Resolve an image ID to its original CDN URL (geekdo JSON API) |
+| `image(id, options?, signal?)` | Resolve an image ID to a CDN URL (geekdo JSON API; default size `original`) |
 | `clearMemo()` | Clears the in-memory memo cache for this instance |
 
 ### Memoization
@@ -89,7 +89,7 @@ try {
 
 ### Types
 
-Public response and options types are exported from the package root, including `ThingOptions`, `CollectionOptions`, `SearchOptions`, `ThingResponse`, `CollectionResponse`, `UserResponse`, `SearchResponse`, `GeeklistResponse`, and `GeeklistItemInformation`.
+Public response and options types are exported from the package root, including `ThingOptions`, `CollectionOptions`, `SearchOptions`, `ImageOptions`, `ImageSize`, `ThingResponse`, `CollectionResponse`, `UserResponse`, `SearchResponse`, `GeeklistResponse`, and `GeeklistItemInformation`.
 
 ## Development
 

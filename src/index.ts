@@ -37,7 +37,11 @@ import {
 import { SearchTransformer } from "./transformers/search";
 import { GeeklistResponse, RawGeeklistResponse } from "./types/geeklist";
 import { GeeklistTransformer } from "./transformers/geeklist";
-import { RawGeekdoImageResponse } from "./types/image";
+import {
+  ImageOptions,
+  ImageSize,
+  RawGeekdoImageResponse,
+} from "./types/image";
 import { BggError } from "./errors";
 import {
   normalizeThingOptions,
@@ -77,6 +81,7 @@ export {
   SearchResult,
 } from "./types/search";
 export { GeeklistResponse, GeeklistItemInformation } from "./types/geeklist";
+export { ImageOptions, ImageSize, IMAGE_SIZES } from "./types/image";
 export { ThingType, NameType, LinkType, LanguageDependenceLevel } from "./types/general";
 
 export class BGG {
@@ -449,8 +454,13 @@ export class BGG {
     return this.setCachedResponse(cacheKey, GeeklistTransformer(response));
   }
 
-  async image(id: string | number, signal?: AbortSignal): Promise<string> {
-    const cacheKey = `image:${id}`;
+  async image(
+    id: string | number,
+    options?: Partial<ImageOptions>,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const size: ImageSize = options?.size ?? "original";
+    const cacheKey = `image:${stableSerialize({ id, size })}`;
     const cached = this.getCachedResponse<string>(cacheKey);
     if (cached) return cached;
 
@@ -460,11 +470,12 @@ export class BGG {
       signal,
       (u, s) => this.fetchJsonFromGeekdo(u, s),
     );
-    const url = response.images?.original?.url;
+    const url = response.images?.[size]?.url;
     if (!url) {
-      throw new BggError(`Missing original image URL for image ${id}.`, {
-        status: 0,
-      });
+      throw new BggError(
+        `Missing ${size} image URL for image ${id}.`,
+        { status: 0 },
+      );
     }
     return this.setCachedResponse(cacheKey, url);
   }
