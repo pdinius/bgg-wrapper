@@ -5,6 +5,7 @@ import {
   RETRY_DELAY_ACCEPTED,
   RETRY_DELAY_RATE_LIMIT,
   TERMS_OF_USE,
+  XMLAPI,
   XMLAPI2,
 } from "./shared/constants";
 import {
@@ -33,6 +34,8 @@ import {
   SearchResponse,
 } from "./types/search";
 import { SearchTransformer } from "./transformers/search";
+import { GeeklistResponse, RawGeeklistResponse } from "./types/geeklist";
+import { GeeklistTransformer } from "./transformers/geeklist";
 import { BggError } from "./errors";
 import {
   normalizeThingOptions,
@@ -71,6 +74,7 @@ export {
   SearchResponse,
   SearchResult,
 } from "./types/search";
+export { GeeklistResponse, GeeklistItemInformation } from "./types/geeklist";
 export { ThingType, NameType, LinkType, LanguageDependenceLevel } from "./types/general";
 
 export class BGG {
@@ -397,6 +401,22 @@ export class BGG {
       signal,
     );
     return this.setCachedResponse(cacheKey, SearchTransformer(response));
+  }
+
+  async geeklist(
+    id: string | number,
+    signal?: AbortSignal,
+  ): Promise<GeeklistResponse> {
+    const cacheKey = `geeklist:${id}`;
+    const cached = this.getCachedResponse<GeeklistResponse>(cacheKey);
+    if (cached) return cached;
+
+    const uri = generateURI(XMLAPI, `geeklist/${id}`);
+    const response = await this.requestWithRetry<RawGeeklistResponse>(
+      uri,
+      signal,
+    );
+    return this.setCachedResponse(cacheKey, GeeklistTransformer(response));
   }
 }
 

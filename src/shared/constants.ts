@@ -1,3 +1,4 @@
+export const XMLAPI = "https://boardgamegeek.com/xmlapi/";
 export const XMLAPI2 = "https://boardgamegeek.com/xmlapi2/";
 export const MAX_RETRIES = 20;
 /** Seconds to wait after a 202 Accepted before polling again. */

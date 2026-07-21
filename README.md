@@ -1,6 +1,6 @@
 # BGG Wrapper
 
-TypeScript wrapper for the [BoardGameGeek XML API2](https://boardgamegeek.com/wiki/page/BGG_XML_API2). It converts XML responses to typed JSON, chunks large `thing` requests, and automatically retries BGG's `202` (queued) and `429` (rate limit) responses.
+TypeScript wrapper for the [BoardGameGeek XML API2](https://boardgamegeek.com/wiki/page/BGG_XML_API2) (plus the legacy XML API for geeklists). It converts XML responses to typed JSON, chunks large `thing` requests, and automatically retries BGG's `202` (queued) and `429` (rate limit) responses.
 
 ## Installation
 
@@ -33,6 +33,8 @@ console.log(ticketToRide.items[0].name); // Ticket to Ride
 | `collection(username, options?, signal?)` | Fetch a user's collection (handles 202 polling) |
 | `collectionComplete(username, options?, signal?)` | Collection plus merged `thing` stats/links |
 | `user(username, signal?)` | Fetch a user profile |
+| `search(query, options?, signal?)` | Search for things by name |
+| `geeklist(id, signal?)` | Fetch a geeklist by ID (legacy XML API) |
 | `clearMemo()` | Clears the in-memory memo cache for this instance |
 
 ### Memoization
@@ -40,7 +42,7 @@ console.log(ticketToRide.items[0].name); // Ticket to Ride
 Pass `memoize: true` to cache transformed JSON on the client instance:
 
 - **`thing`** caches each game individually. Option sets are matched with superset rules (e.g. a `stats: true` entry can satisfy a later request without stats). Partial array overlaps reuse cached ids and only fetch the rest.
-- **`collection` / `user` / `search` / `collectionComplete`** use exact-parameter keys.
+- **`collection` / `user` / `search` / `geeklist` / `collectionComplete`** use exact-parameter keys.
 - Call `clearMemo()` to drop the cache. Cached values are cloned so callers can mutate results safely.
 
 For large `thing` requests you can track chunk progress:
@@ -86,7 +88,7 @@ try {
 
 ### Types
 
-Public response and options types are exported from the package root, including `ThingOptions`, `CollectionOptions`, `SearchOptions`, `ThingResponse`, `CollectionResponse`, `UserResponse`, and `SearchResponse`.
+Public response and options types are exported from the package root, including `ThingOptions`, `CollectionOptions`, `SearchOptions`, `ThingResponse`, `CollectionResponse`, `UserResponse`, `SearchResponse`, `GeeklistResponse`, and `GeeklistItemInformation`.
 
 ## Development
 
