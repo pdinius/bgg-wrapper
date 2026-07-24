@@ -27,5 +27,7 @@ export type LinkType =
   | "boardgamedesigner"
   | "boardgameartist"
   | "boardgamepublisher"
-  | "boardgamecompilation";
+  | "boardgamecompilation"
+  | "boardgameversion"
+  | "language";
 

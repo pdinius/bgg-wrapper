@@ -120,6 +120,9 @@ export interface RawVersion {
   };
   thumbnail: string;
   image: string;
+  canonicalname: {
+    value: string;
+  };
   link: RawLink | RawLink[];
   name: RawThingName;
   yearpublished: {
@@ -343,12 +346,17 @@ export interface Version {
   thumbnail: string;
   image: string;
   name: string;
+  canonicalName: string;
   productCode?: string;
   yearPublished: number;
   width: number;
   length: number;
   depth: number;
   weight: number;
+  game?: LinkInformation;
+  publishers: LinkInformation[];
+  artists: LinkInformation[];
+  languages: LinkInformation[];
 }
 
 export interface Comment {

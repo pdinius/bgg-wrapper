@@ -104,11 +104,12 @@ const languageDependenceReducer = (
   ];
 };
 
-const versionMapper = (v: RawVersion) => {
+export const versionMapper = (v: RawVersion) => {
   const {
     $: { id },
     thumbnail,
     image,
+    canonicalname: { value: canonicalName },
     name: { value: name },
     productcode: { value: productcode },
     yearpublished: { value: yearpublished },
@@ -117,18 +118,25 @@ const versionMapper = (v: RawVersion) => {
     depth: { value: depth },
     weight: { value: weight },
   } = v;
+  const links = v.link ? invariantArray(v.link) : [];
+  const game = links.reduce(linkReducer("boardgameversion", true), [])[0];
 
   return {
     id,
     name,
+    canonicalName: decodeEntities(canonicalName),
     thumbnail,
     image,
-    productCode: productcode,
+    productCode: productcode || undefined,
     yearPublished: yearpublished,
     width,
     length,
     depth,
     weight,
+    ...(game ? { game } : {}),
+    publishers: links.reduce(linkReducer("boardgamepublisher"), []),
+    artists: links.reduce(linkReducer("boardgameartist"), []),
+    languages: links.reduce(linkReducer("language"), []),
   };
 };
 
